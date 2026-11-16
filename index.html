@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>a6700 Field Manual — photography from zero, then snow</title>
+<meta name="description" content="A beginner's field manual for the Sony a6700 with the Sigma 18–50mm f/2.8 and Sony 18–135mm: exposure explained with live simulators, which lens to use, and how to photograph snow.">
+<meta name="theme-color" content="#0b1116">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b1116'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23ff5a1f'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/newsreader-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<a class="skip" href="#exposure">Skip to the manual</a>
+
+<header class="nav" id="nav">
+  <a class="nav__brand" href="#top"><b>a6700</b><span>Field Manual</span></a>
+  <nav class="nav__links" aria-label="Chapters">
+    <a href="#exposure"><i>01</i>Exposure</a>
+    <a href="#lenses"><i>02</i>Lenses</a>
+    <a href="#snow"><i>03</i>Snow</a>
+    <a href="#setup"><i>04</i>Setup</a>
+    <a href="#words"><i>05</i>Words</a>
+    <a href="#pocket"><i>06</i>Pocket card</a>
+  </nav>
+  <div class="nav__progress" aria-hidden="true"><span id="progress"></span></div>
+</header>
+
+<!-- ───────────── HERO ───────────── -->
+<section class="hero" id="top">
+  <canvas class="hero__snow" id="heroSnow" aria-hidden="true"></canvas>
+  <div class="hero__inner wrap">
+    <p class="label hero__kicker">A beginner's manual for one camera and two lenses</p>
+    <h1 class="hero__title display">
+      <span class="line"><span>Learn the light.</span></span>
+      <span class="line"><span>Then go find snow.</span></span>
+    </h1>
+    <div class="hero__lower">
+      <p class="hero__lede">You bought a very good camera. This is the short, plain-English version of everything it assumes you already know: what the three main settings do, which of your lenses to reach for, and why snow keeps coming out grey.</p>
+      <div class="shutterdemo">
+        <div class="shutterdemo__head">
+          <span class="label">Your first lesson — drag it</span>
+          <output class="shutterdemo__val display" id="heroShutterVal" for="heroShutter">1/1000</output>
+        </div>
+        <input class="range range--dark" id="heroShutter" type="range" min="0" max="8" step="1" value="1" aria-label="Shutter speed for the falling snow">
+        <div class="range__ends label"><span>Fast shutter</span><span>Slow shutter</span></div>
+        <p class="shutterdemo__say" id="heroShutterSay">That number is <em>shutter speed</em>: how long the camera looks. At a thousandth of a second, every flake is frozen in mid-air.</p>
+      </div>
+    </div>
+  </div>
+  <dl class="hero__kit wrap">
+    <div><dt class="label">Body</dt><dd>Sony a6700 <span>APS-C · 26 MP · stabilised</span></dd></div>
+    <div><dt class="label">Lens A</dt><dd>Sigma 18–50mm f/2.8 <span>bright, small, sharp</span></dd></div>
+    <div><dt class="label">Lens B</dt><dd>Sony 18–135mm f/3.5–5.6 <span>long reach, stabilised</span></dd></div>
+  </dl>
+</section>
+
+<main>
+
+<!-- ───────────── 01 EXPOSURE ───────────── -->
+<section class="chapter" id="exposure">
+  <div class="wrap">
+    <header class="chead">
+      <p class="chead__no label">Chapter 01</p>
+      <h2 class="chead__title display">Three settings<br>make every photo</h2>
+      <p class="chead__lede">A photo is just collected light. Three controls decide how much gets collected, and each one changes the look of the picture as a side effect. Learn the side effects and you have learned photography.</p>
+    </header>
+
+    <div class="trio">
+      <article class="trio__item reveal">
+        <p class="trio__sym display">f/</p>
+        <h3>Aperture</h3>
+        <p class="trio__what">The size of the hole in the lens.</p>
+        <p>A wide hole lets in lots of light and melts the background into blur. A small hole lets in little light and keeps everything sharp, near to far.</p>
+        <p class="trio__catch"><b>The catch:</b> the numbers run backwards. <b>f/2.8</b> is a big hole. <b>f/16</b> is a tiny one.</p>
+      </article>
+      <article class="trio__item reveal">
+        <p class="trio__sym display">1/</p>
+        <h3>Shutter speed</h3>
+        <p class="trio__what">How long the camera looks.</p>
+        <p>A short look (1/1000 of a second) freezes a skier mid-jump. A long look (1/15) lets in more light but smears anything that moves, including your hands.</p>
+        <p class="trio__catch"><b>Safe floors:</b> 1/125 for still things, 1/250 for people, 1/1000 for action.</p>
+      </article>
+      <article class="trio__item reveal">
+        <p class="trio__sym display">ISO</p>
+        <h3>ISO</h3>
+        <p class="trio__what">How much the camera amplifies what it got.</p>
+        <p>ISO 100 is the cleanest picture. Raising it brightens the photo without needing more light, but adds speckly grain called noise.</p>
+        <p class="trio__catch"><b>On your a6700:</b> up to about 3200 looks clean, 6400 is fine, beyond that is for emergencies.</p>
+      </article>
+    </div>
+
+    <div class="sim" id="sim">
+      <div class="sim__stagecol">
+        <figure class="vf" id="simStage">
+          <div class="vf__scene" id="simScene">
+            <div class="vf__layer" id="simBg"></div>
+            <div class="vf__layer" id="simFg"></div>
+            <canvas class="vf__layer" id="simSnow"></canvas>
+            <div class="vf__layer vf__grain" id="simGrain"></div>
+          </div>
+          <div class="vf__marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="vf__cursor" id="simCursor" aria-hidden="true"></div>
+          <figcaption class="vf__hud" aria-live="polite">
+            <span id="hudSs">1/500</span>
+            <span id="hudF">F8.0</span>
+            <span class="vf__meter" aria-hidden="true"><b>−</b><span class="meter"><span class="meter__ticks"></span><i id="hudNeedle"></i></span><b>+</b></span>
+            <span id="hudIso">ISO 100</span>
+          </figcaption>
+        </figure>
+        <p class="sim__verdict" id="simVerdict"><b class="label">Exposure</b><span>Correctly exposed.</span></p>
+      </div>
+
+      <div class="sim__controls">
+        <div class="seg" role="group" aria-label="Lens on the camera">
+          <button type="button" class="seg__b is-on" data-lens="sigma" aria-pressed="true">Sigma 18–50 <span>opens to f/2.8</span></button>
+          <button type="button" class="seg__b" data-lens="sony" aria-pressed="false">Sony 18–135 <span>opens to f/4 here</span></button>
+        </div>
+
+        <div class="ctl">
+          <div class="ctl__head"><label class="label" for="simF">Aperture</label><output class="ctl__val display" id="simFVal" for="simF">f/8</output></div>
+          <input class="range" id="simF" type="range" min="0" max="6" step="1" value="3">
+          <div class="range__ends label"><span>Blurry background</span><span>All sharp</span></div>
+          <p class="ctl__say" id="simFSay"></p>
+        </div>
+        <div class="ctl">
+          <div class="ctl__head"><label class="label" for="simS">Shutter speed</label><output class="ctl__val display" id="simSVal" for="simS">1/500</output></div>
+          <input class="range" id="simS" type="range" min="0" max="9" step="1" value="3">
+          <div class="range__ends label"><span>Freezes motion</span><span>Smears motion</span></div>
+          <p class="ctl__say" id="simSSay"></p>
+        </div>
+        <div class="ctl">
+          <div class="ctl__head"><label class="label" for="simI">ISO</label><output class="ctl__val display" id="simIVal" for="simI">100</output></div>
+          <input class="range" id="simI" type="range" min="0" max="7" step="1" value="0">
+          <div class="range__ends label"><span>Clean</span><span>Grainy</span></div>
+          <p class="ctl__say" id="simISay"></p>
+        </div>
+        <div class="sim__actions">
+          <button type="button" class="btn" id="simBalance">Balance it with shutter speed</button>
+          <button type="button" class="link" id="simReset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stops">
+      <div class="stops__text">
+        <h3 class="h3">The trade is always the same</h3>
+        <p>Photographers measure light in <b>stops</b>. One stop is a doubling or a halving. Every click of the sliders above is one stop, which is why they can cancel each other out: open the aperture one stop, speed the shutter up one stop, and the brightness lands exactly where it was. Only the look has changed.</p>
+        <p>You will rarely set all three yourself. On your camera's mode dial, <b>A</b> lets you choose the aperture and the camera works out the rest. Start there.</p>
+      </div>
+      <dl class="modes">
+        <div><dt class="display">A</dt><dd><b>Aperture priority.</b> You pick the blur, the camera picks the shutter. Leave the dial here for your first month.</dd></div>
+        <div><dt class="display">S</dt><dd><b>Shutter priority.</b> You pick the speed, the camera picks the aperture. For action and for falling snow.</dd></div>
+        <div><dt class="display">M</dt><dd><b>Manual.</b> You pick both. With ISO on Auto it is friendlier than it sounds.</dd></div>
+        <div><dt class="display">P</dt><dd><b>Program.</b> The camera picks both, you can still nudge brightness. Handing-it-to-a-stranger mode.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"></div>
+
+<!-- ───────────── 02 LENSES ───────────── -->
+<section class="chapter" id="lenses">
+  <div class="wrap">
+    <header class="chead">
+      <p class="chead__no label">Chapter 02</p>
+      <h2 class="chead__title display">Two lenses,<br>two different jobs</h2>
+      <p class="chead__lede">Both start at the same wide view. One trades reach for light, the other trades light for reach. Knowing which trade you need today is most of choosing a lens.</p>
+    </header>
+
+    <div class="zoom">
+      <figure class="vf vf--zoom">
+        <div class="vf__scene"><div class="vf__layer vf__zoomer" id="zoomScene"></div></div>
+        <div class="vf__marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <figcaption class="vf__hud vf__hud--zoom"><span id="zoomMm">18 mm</span><span id="zoomKind">Wide</span></figcaption>
+      </figure>
+
+      <div class="zoom__panel">
+        <div class="zoom__read">
+          <div><span class="label">Focal length</span><output class="zoom__big display" id="zoomVal" for="zoomRange">18<small>mm</small></output></div>
+          <p id="zoomSay">As wide as either lens goes. The whole valley fits. This is the view for landscapes, rooms and group shots.</p>
+        </div>
+
+        <div class="fscale" id="fscale">
+          <div class="fscale__marks label" id="fscaleMarks"></div>
+          <div class="fscale__bar fscale__bar--sigma" id="barSigma"><span class="fscale__fill"></span><b>Sigma 18–50</b><em id="apSigma">f/2.8</em></div>
+          <div class="fscale__bar fscale__bar--sony" id="barSony"><span class="fscale__fill"></span><b>Sony 18–135</b><em id="apSony">f/3.5</em></div>
+          <i class="fscale__index" id="fscaleIndex"></i>
+          <input class="fscale__input" id="zoomRange" type="range" min="0" max="1000" step="1" value="0" aria-label="Focal length in millimetres">
+        </div>
+        <p class="zoom__hint label">Drag across the scale to zoom</p>
+      </div>
+    </div>
+
+    <div class="versus">
+      <div class="versus__row versus__row--head">
+        <span></span>
+        <h3><small class="label">Lens A</small>Sigma 18–50mm f/2.8</h3>
+        <h3><small class="label">Lens B</small>Sony 18–135mm f/3.5–5.6</h3>
+      </div>
+      <div class="versus__row"><span class="label">In one line</span><p>The bright one. Lets in two to four times more light.</p><p>The far one. Reaches almost three times further.</p></div>
+      <div class="versus__row"><span class="label">Widest aperture</span><p><b>f/2.8</b> at every zoom position</p><p><b>f/3.5</b> wide, shrinking to <b>f/5.6</b> by about 70 mm</p></div>
+      <div class="versus__row"><span class="label">Background blur</span><p>Strong. Real separation for portraits.</p><p>Modest. Best at 135 mm with a distant background.</p></div>
+      <div class="versus__row"><span class="label">Low light</span><p>Good. Indoors and dusk without huge ISO.</p><p>Weak. ISO climbs quickly after sunset.</p></div>
+      <div class="versus__row"><span class="label">Stabilisation</span><p>None in the lens; your a6700's body steadies it.</p><p>In the lens, working together with the body.</p></div>
+      <div class="versus__row"><span class="label">Close-ups</span><p>Focuses about 12 cm away. Nearly macro.</p><p>Needs about 45 cm.</p></div>
+      <div class="versus__row"><span class="label">Weather</span><p>Rubber seal at the mount.</p><p>No sealing. Keep it dry.</p></div>
+      <div class="versus__row"><span class="label">Weight · filter</span><p>About 290 g · 55 mm</p><p>About 325 g · 55 mm</p></div>
+      <div class="versus__row versus__row--pick"><span class="label">Reach for it when</span>
+        <p>People, food, indoors, evenings, falling snow, any time you want a soft background.</p>
+        <p>Travel days, hikes, wildlife, kids on a ski slope, any time you can't walk closer.</p>
+      </div>
+    </div>
+
+    <aside class="note reveal">
+      <p class="label">Worth knowing</p>
+      <p>The a6700's sensor is a size called APS-C, a little smaller than the "full-frame" standard that lens numbers are usually quoted against. Multiply by 1.5 to translate: your 18–50 frames like a 27–75, your 18–135 like a 27–200. And because both lenses take <b>55 mm filters</b>, one polarising filter fits both.</p>
+    </aside>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"></div>
+
+<!-- ───────────── 03 SNOW ───────────── -->
+<section class="chapter" id="snow">
+  <div class="wrap">
+    <header class="chead">
+      <p class="chead__no label">Chapter 03</p>
+      <h2 class="chead__title display">Why your snow<br>comes out grey</h2>
+      <p class="chead__lede">Your camera cannot know it is looking at snow. It assumes every scene averages out to a medium grey, sees a frame full of brilliant white, concludes it is far too bright, and darkens it. The fix is one control.</p>
+    </header>
+
+    <div class="evdemo">
+      <figure class="vf vf--ev">
+        <div class="vf__scene"><div class="vf__layer" id="evScene"></div></div>
+        <div class="vf__marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <canvas class="vf__histo" id="evHisto" width="240" height="120" aria-hidden="true"></canvas>
+        <figcaption class="vf__hud vf__hud--zoom"><span id="evHud">±0.0</span><span id="evHudWord">Camera's guess</span></figcaption>
+      </figure>
+      <div class="evdemo__panel">
+        <div class="ctl ctl--flush">
+          <div class="ctl__head"><label class="label" for="evRange">Exposure compensation</label><output class="ctl__val display" id="evVal" for="evRange">±0.0</output></div>
+          <input class="range" id="evRange" type="range" min="-6" max="9" step="1" value="0">
+          <div class="range__ends label"><span>−2 darker</span><span>+3 brighter</span></div>
+        </div>
+        <p class="evdemo__verdict" id="evSay"></p>
+        <ol class="evdemo__steps">
+          <li><b>Find the ± control.</b> The a6700 has no dedicated dial for it, so give it one (see Setup, step 10).</li>
+          <li><b>Dial in +1</b> before you take the first frame. Sunny snow often wants +1.3 to +1.7.</li>
+          <li><b>Read the graph, not the screen.</b> Push the big hump to the right until it sits near the edge without piling up against it.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3 class="h3 h3--rule">Which lens goes up the mountain</h3>
+    <div class="pick">
+      <div class="pick__col reveal">
+        <p class="label">Bright, dry day</p>
+        <p class="pick__name display">Sony 18–135</p>
+        <p>Snow in sunshine is one of the brightest scenes you will ever shoot, so the dimmer aperture costs you nothing. You get wide landscapes and distant skiers from one lens that never has to come off.</p>
+      </div>
+      <div class="pick__col reveal">
+        <p class="label">Snow falling, dusk, or people</p>
+        <p class="pick__name display">Sigma 18–50</p>
+        <p>Storm light is dim. f/2.8 keeps your shutter fast enough to freeze flakes, blurs the background behind a face, and the sealed mount is a little more forgiving of damp.</p>
+      </div>
+      <p class="pick__rule reveal"><b>Either way, choose before you leave</b> and don't change lenses outside while it is snowing. An open camera mount and a snowflake is how sensors get spotted.</p>
+    </div>
+
+    <h3 class="h3 h3--rule">Six snow recipes</h3>
+    <p class="sub">Starting points, not rules. Set them, take a frame, check the histogram, adjust.</p>
+    <div class="recipes">
+      <article class="recipe reveal">
+        <div class="recipe__what"><span class="recipe__no display">1</span><h4>Sunny landscape</h4><p>Blue sky, white slopes, everything sharp front to back.</p></div>
+        <dl class="recipe__set"><div><dt>Mode</dt><dd>A</dd></div><div><dt>Aperture</dt><dd>f/8</dd></div><div><dt>Shutter</dt><dd>auto</dd></div><div><dt>ISO</dt><dd>100</dd></div><div class="is-key"><dt>±</dt><dd>+1.3</dd></div></dl>
+        <p class="recipe__tip"><b>Either lens.</b> A polariser deepens the sky and cuts glare off the snow.</p>
+      </article>
+      <article class="recipe reveal">
+        <div class="recipe__what"><span class="recipe__no display">2</span><h4>Falling snow, frozen</h4><p>Crisp individual flakes hanging in the air.</p></div>
+        <dl class="recipe__set"><div><dt>Mode</dt><dd>S</dd></div><div><dt>Aperture</dt><dd>auto</dd></div><div><dt>Shutter</dt><dd>1/500</dd></div><div><dt>ISO</dt><dd>auto</dd></div><div class="is-key"><dt>±</dt><dd>+0.7</dd></div></dl>
+        <p class="recipe__tip"><b>Sigma.</b> Flakes only show against something dark, so put trees or a building behind them.</p>
+      </article>
+      <article class="recipe reveal">
+        <div class="recipe__what"><span class="recipe__no display">3</span><h4>Falling snow, streaked</h4><p>Soft white lines that feel like a blizzard.</p></div>
+        <dl class="recipe__set"><div><dt>Mode</dt><dd>S</dd></div><div><dt>Aperture</dt><dd>auto</dd></div><div><dt>Shutter</dt><dd>1/30</dd></div><div><dt>ISO</dt><dd>100</dd></div><div class="is-key"><dt>±</dt><dd>+0.7</dd></div></dl>
+        <p class="recipe__tip"><b>Either lens.</b> Tuck your elbows in and breathe out as you press. Stabilisation does the rest.</p>
+      </article>
+      <article class="recipe reveal">
+        <div class="recipe__what"><span class="recipe__no display">4</span><h4>A person in the snow</h4><p>Sharp eyes, soft background, skin that isn't grey.</p></div>
+        <dl class="recipe__set"><div><dt>Mode</dt><dd>A</dd></div><div><dt>Aperture</dt><dd>f/2.8</dd></div><div><dt>Shutter</dt><dd>auto</dd></div><div><dt>ISO</dt><dd>100</dd></div><div class="is-key"><dt>±</dt><dd>+1.0</dd></div></dl>
+        <p class="recipe__tip"><b>Sigma at 50 mm.</b> Step back and zoom in. Snow acts as a giant reflector, so faces are lit beautifully.</p>
+      </article>
+      <article class="recipe reveal">
+        <div class="recipe__what"><span class="recipe__no display">5</span><h4>Skiing and sledging</h4><p>Fast subjects coming straight at you.</p></div>
+        <dl class="recipe__set"><div><dt>Mode</dt><dd>S</dd></div><div><dt>Aperture</dt><dd>auto</dd></div><div><dt>Shutter</dt><dd>1/1600</dd></div><div><dt>ISO</dt><dd>auto</dd></div><div class="is-key"><dt>±</dt><dd>+1.0</dd></div></dl>
+        <p class="recipe__tip"><b>Sony 18–135.</b> AF-C with Tracking, burst on Hi, and start shooting before the moment.</p>
+      </article>
+      <article class="recipe reveal">
+        <div class="recipe__what"><span class="recipe__no display">6</span><h4>Overcast or blue hour</h4><p>Flat grey light, or the glow after sunset.</p></div>
+        <dl class="recipe__set"><div><dt>Mode</dt><dd>A</dd></div><div><dt>Aperture</dt><dd>f/2.8</dd></div><div><dt>Shutter</dt><dd>auto</dd></div><div><dt>ISO</dt><dd>auto</dd></div><div class="is-key"><dt>±</dt><dd>+0.7</dd></div></dl>
+        <p class="recipe__tip"><b>Sigma.</b> Snow in shade photographs blue. Set white balance to Cloudy, or fix it later from the RAW file.</p>
+      </article>
+    </div>
+
+    <h3 class="h3 h3--rule">Keeping the camera alive in the cold</h3>
+    <ol class="care">
+      <li class="reveal"><h4>Cold eats batteries</h4><p>Expect half the usual life below freezing. Carry a spare in an inside pocket against your body and swap them when one fades. A "dead" cold battery often revives once warm.</p></li>
+      <li class="reveal"><h4>Warm rooms are the real danger</h4><p>A frozen camera carried into a heated cabin fogs up inside and out. Before you go in, seal it in your camera bag or a zip-lock bag and leave it closed for an hour so it warms slowly.</p></li>
+      <li class="reveal"><h4>Brush, don't blow</h4><p>Your breath freezes onto glass. Flick snow off with a glove or a dry cloth, and keep the lens hood on: it stops most flakes reaching the front of the lens.</p></li>
+      <li class="reveal"><h4>Damp is not the same as wet</h4><p>The a6700 is built to resist dust and moisture, not to be soaked. Light dry snow is fine. Wet sleet means a cover, a jacket, or putting it away.</p></li>
+    </ol>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"></div>
+
+<!-- ───────────── 04 SETUP ───────────── -->
+<section class="chapter" id="setup">
+  <div class="wrap">
+    <header class="chead">
+      <p class="chead__no label">Chapter 04</p>
+      <h2 class="chead__title display">Twelve settings,<br>then stop fiddling</h2>
+      <p class="chead__lede">The a6700's menu has hundreds of options and you need about a dozen. Set these once, on the sofa, and the camera will stay out of your way. Names are written the way the menu spells them. Tick them off as you go; this page remembers.</p>
+    </header>
+
+    <div class="setup">
+      <ol class="checks" id="checks">
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Mode dial → A</b><em>You choose the aperture, the camera handles the rest.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>File Format → RAW &amp; JPEG</b><em>A ready-to-share picture plus a rescue copy you can fix later.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Focus Mode → AF-C</b><em>Keeps refocusing while you hold the button. Right for almost everything.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Focus Area → Tracking: Expand Spot</b><em>Point at a thing, half-press, and the camera follows it around the frame.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Subject Recognition → On, Human</b><em>Finds and holds eyes by itself. Switch to Animal or Bird when the subject changes.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>ISO → AUTO, range 100–6400</b><em>Lets the camera raise ISO when it must, but never into the ugly zone.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>ISO AUTO Min. SS → Fast</b><em>Tells the camera to prefer a quicker shutter over a lower ISO. Fewer blurry people.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>SteadyShot → On</b><em>The sensor floats to cancel your hand shake. It is why the Sigma is usable at slow speeds.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Grid Line → Rule of 3rds</b><em>Two lines across, two down. Keeps horizons level and subjects off dead centre.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Exposure Comp. → on a dial or the control wheel</b><em>In the custom key and dial settings. This is your snow control; it must be one thumb-turn away.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>Zebra Display → On, level 100+</b><em>Draws stripes over anything blown to pure white, before you take the picture.</em></span></label></li>
+        <li><label><input type="checkbox"><span class="checks__box"></span><span class="checks__body"><b>DISP button → until the histogram shows</b><em>Press it a few times in the viewfinder and on the screen. Leave the graph on.</em></span></label></li>
+      </ol>
+
+      <aside class="setup__side">
+        <p class="setup__count"><b class="display" id="checkCount">0</b><span class="label">of 12 set</span></p>
+        <div class="drills">
+          <p class="label">Four drills for your first week</p>
+          <ol>
+            <li><b>The mug.</b> Put a mug on a table with a window behind it. Shoot it at f/2.8, f/5.6 and f/11. Compare the backgrounds.</li>
+            <li><b>The tap.</b> Run a tap. Shoot it at 1/2000 and at 1/15. Water turns from beads into silk.</li>
+            <li><b>The dark room.</b> Same indoor scene at ISO 400, 3200 and 12800. Zoom in on the shadows and find your own limit.</li>
+            <li><b>The white wall.</b> Fill the frame with a white wall and take one shot. It will be grey. Add +1.3 and shoot again. That is the whole snow chapter in ten seconds.</li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<div class="ruler" aria-hidden="true"></div>
+
+<!-- ───────────── 05 WORDS ───────────── -->
+<section class="chapter" id="words">
+  <div class="wrap">
+    <header class="chead">
+      <p class="chead__no label">Chapter 05</p>
+      <h2 class="chead__title display">The jargon,<br>decoded</h2>
+      <p class="chead__lede">Every word you will meet in a camera menu, a lens review or a tutorial video, in one sentence each, with what it means for the kit in your bag.</p>
+    </header>
+
+    <div class="gloss">
+      <div class="gloss__tools">
+        <label class="gloss__search"><span class="label">Find a word</span><input type="search" id="glossQ" placeholder="bokeh, histogram, AF-C…" autocomplete="off" spellcheck="false"></label>
+        <div class="gloss__tabs" id="glossTabs" role="group" aria-label="Filter by topic"></div>
+      </div>
+      <dl class="gloss__list" id="glossList"></dl>
+      <p class="gloss__empty" id="glossEmpty" hidden>No match. Try a shorter word.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── 06 POCKET CARD ───────────── -->
+<section class="pocket" id="pocket">
+  <div class="wrap">
+    <header class="chead chead--pocket">
+      <p class="chead__no label">Chapter 06 · open this one on the mountain</p>
+      <h2 class="chead__title display">Pocket card</h2>
+    </header>
+
+    <ol class="tips">
+      <li><b>Small f-number, blurry background.</b> Big f-number, everything sharp.</li>
+      <li><b>1/250 for people.</b> 1/1000 for anything that runs, skis or flies.</li>
+      <li><b>Raise ISO last,</b> but raise it. Grainy and sharp beats clean and blurred.</li>
+      <li><b>Snow in the frame? Dial +1.</b> Then check the graph.</li>
+      <li><b>Trust the histogram,</b> not the screen. Screens lie in bright sun.</li>
+      <li><b>Focus on the nearest eye.</b> Let the camera's eye detection do it.</li>
+      <li><b>Half-press, pause, press.</b> Jabbing the button blurs the shot.</li>
+      <li><b>Spare battery in an inside pocket.</b> Warm batteries work.</li>
+      <li><b>Bag the camera before going indoors.</b> One hour, closed.</li>
+      <li><b>Never change lenses in falling snow.</b></li>
+      <li><b>Hood on, always.</b> It blocks flakes, glare and knocks.</li>
+      <li><b>Take the second photo from lower down.</b> It is usually the better one.</li>
+    </ol>
+
+    <div class="fix">
+      <h3 class="label">When the photo is wrong</h3>
+      <div class="fix__rows">
+        <div><p>Snow looks grey or dull</p><p>Exposure compensation up: +1 to +1.7</p></div>
+        <div><p>Snow is a flat white blob</p><p>You went too far. Bring ± down until the stripes vanish</p></div>
+        <div><p>Everything is slightly blurred</p><p>Shutter too slow. Go faster, let ISO rise</p></div>
+        <div><p>Background sharp, subject soft</p><p>Focus missed. Half-press on the subject, then shoot</p></div>
+        <div><p>Speckly and rough</p><p>ISO too high. Open the aperture or slow the shutter instead</p></div>
+        <div><p>Snow looks blue</p><p>White balance: switch from Auto to Cloudy or Shade</p></div>
+        <div><p>Picture far too dark</p><p>Check ± isn't left on a minus value from earlier</p></div>
+        <div><p>Camera won't switch on</p><p>Cold battery. Swap for the warm one in your pocket</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p class="display foot__mark">a6700 Field Manual</p>
+    <p>Written for one camera, two lenses and one beginner. Lens figures are rounded; menu names can shift slightly between firmware versions, so treat your camera's own help guide as the final word.</p>
+    <a class="label" href="#top">Back to the top ↑</a>
+  </div>
+</footer>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>
