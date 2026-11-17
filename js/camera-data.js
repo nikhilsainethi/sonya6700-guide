@@ -359,3 +359,14 @@ export const TASKS = [
       { c: 'del', do: '<b>C3</b> is the Delete button. It only deletes during playback, so while shooting it is free.', try: ['press', 'del'] },
     ] },
 ];
+
+/* The six snow recipes from Chapter 03. ev is in thirds of a stop; light is how bright the scene is
+   (0 = sunlit snow, −3 = snowing under heavy cloud, −6 = blue hour); mm is the zoom the model is set to. */
+export const RECIPES = [
+  { n: 1, title: 'Sunny landscape', what: 'Blue sky, white slopes, everything sharp front to back.', mode: 'A', f: 8, iso: 100, ev: 4, light: 0, mm: 18, lens: 'Either lens', tip: 'A polariser deepens the sky and cuts glare off the snow.' },
+  { n: 2, title: 'Falling snow, frozen', what: 'Crisp individual flakes hanging in the air.', mode: 'S', ss: 500, iso: 'AUTO', ev: 2, light: -3, mm: 24, lens: 'Sigma 18–50', tip: 'Flakes only show against something dark, so put trees or a building behind them.' },
+  { n: 3, title: 'Falling snow, streaked', what: 'Soft white lines that feel like a blizzard.', mode: 'S', ss: 30, iso: 100, ev: 2, light: -4, mm: 24, lens: 'Either lens', tip: 'Tuck your elbows in and breathe out as you press. Stabilisation does the rest.' },
+  { n: 4, title: 'A person in the snow', what: 'Sharp eyes, soft background, skin that isn\'t grey.', mode: 'A', f: 2.8, iso: 100, ev: 3, light: 0, mm: 50, lens: 'Sigma at 50 mm', tip: 'Step back and zoom in. Snow acts as a giant reflector, so faces are lit beautifully.' },
+  { n: 5, title: 'Skiing and sledging', what: 'Fast subjects coming straight at you.', mode: 'S', ss: 1600, iso: 'AUTO', ev: 3, light: 0, mm: 50, lens: 'Sony 18–135', tip: 'AF-C with Tracking, burst on Hi, and start shooting before the moment. (The model wears the Sigma, so the numbers here are for f/2.8 glass.)' },
+  { n: 6, title: 'Overcast or blue hour', what: 'Flat grey light, or the glow after sunset.', mode: 'A', f: 2.8, iso: 'AUTO', ev: 2, light: -6, mm: 18, lens: 'Sigma 18–50', tip: 'Snow in shade photographs blue. Set white balance to Cloudy, or fix it later from the RAW file.' },
+];

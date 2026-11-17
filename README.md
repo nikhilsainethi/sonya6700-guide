@@ -4,7 +4,9 @@ A single-page beginner's guide to photography, written for a Sony a6700 with the
 Sigma 18–50mm f/2.8 and Sony E 18–135mm f/3.5–5.6.
 
 - **00 Camera** (`camera.html`) — an interactive 3D a6700: pick a task and the camera turns to show which button or dial to use.
-  The model works: press its buttons, drag its dials, and the rear screen and exposure respond, so each step can be tried on the spot
+  The model works: press its buttons, drag its dials, and the rear screen and exposure respond, so each step can be tried on the spot.
+  It also carries the six snow recipes: pick one and the camera sets itself, switch it to a fully manual version, set it by hand step by step,
+  and save it to position 1, 2 or 3 on the mode dial
 - **01 Exposure** — aperture, shutter speed and ISO, with a live simulator
 - **02 Lenses** — what each lens is for, with a focal-length visualiser
 - **03 Snow** — why snow comes out grey, six starting recipes, cold-weather care

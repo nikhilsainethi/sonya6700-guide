@@ -2,9 +2,9 @@
    The model can be operated: buttons press, dials turn, and the rear screen answers. */
 import * as THREE from '../vendor/three.module.min.js';
 import { RoomEnvironment } from '../vendor/RoomEnvironment.js';
-import { CONTROLS, TASKS, FACES } from './camera-data.js';
+import { CONTROLS, TASKS, FACES, RECIPES } from './camera-data.js';
 import { buildCamera, mat, ORANGE } from './camera-model.js';
-import { createLCD, defaults, expose, F_STOPS, SHUTTERS, ISOS, DRIVES, MODES, ZOOMS, SMS, FN_COUNT, MENU_COUNT, fnOptions, fmtF, fmtSS, fmtEV } from './camera-lcd.js';
+import { createLCD, defaults, expose, F_STOPS, SHUTTERS, ISOS, DRIVES, MODES, ZOOMS, SMS, FN_COUNT, MENU_COUNT, fnOptions, fmtF, fmtSS, fmtEV, effMode } from './camera-lcd.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -286,7 +286,16 @@ function press(id) {
   }
 }
 function turn(id, dir) {
-  if (id === 'modeDial') { S.mode = MODES[(MODES.indexOf(S.mode) + dir + 8) % 8]; return { AUTO: 'AUTO: the camera sets everything.', P: 'P: the camera sets aperture and shutter.', A: 'A: you set the aperture.', S: 'S: you set the shutter speed.', M: 'M: you set both.' }[S.mode] || `${S.mode}: recalls a setup you have saved.`; }
+  if (id === 'modeDial') {
+    S.mode = MODES[(MODES.indexOf(S.mode) + dir + 8) % 8]; S.as = null;
+    if (/^[123]$/.test(S.mode)) {                        // memory recall: the whole saved setup comes back
+      const slot = memory[S.mode];
+      if (!slot) return `${S.mode}: nothing saved here yet. Open a snow recipe and save it to ${S.mode}.`;
+      Object.assign(S, { fi: slot.fi, si: slot.si, iso: slot.iso, ev: slot.ev, as: slot.mode });
+      return `${S.mode}: recalled "${slot.name}" (${slot.mode} mode).`;
+    }
+    return { AUTO: 'AUTO: the camera sets everything.', P: 'P: the camera sets aperture and shutter.', A: 'A: you set the aperture.', S: 'S: you set the shutter speed.', M: 'M: you set both.' }[S.mode];
+  }
   if (id === 'smsDial') { S.sms = SMS[clamp(SMS.indexOf(S.sms) + dir, 0, 2)]; if (S.sms === 'still' && S.rec) setRec(false); return { still: 'Still photos.', movie: 'Movie mode.', sq: 'S&Q: slow and quick motion.' }[S.sms]; }
   if (id === 'diopter') return 'Viewfinder focus adjusted. Your photos are unaffected.';
   if (id === 'lens') { if (!S.lens) return ''; S.mm = ZOOMS[clamp(ZOOMS.indexOf(S.mm) + dir, 0, ZOOMS.length - 1)]; return `Zoomed to ${S.mm} mm.`; }
@@ -304,13 +313,13 @@ function turn(id, dir) {
   if (PLAYING.has(sc)) { if (sc === 'play' || sc === 'index') S.play = clamp(S.play + dir, 0, n - 1); return ''; }
   if (id === 'wheel') return 'On the live view the wheel waits for a shortcut. Press one of its edges first.';
   if (S.mode === 'AUTO') return 'In AUTO the camera chooses the exposure. Turn the mode dial to A, S or M.';
-  const which = S.mode === 'S' ? 'si' : S.mode === 'M' && id === 'rearDial' ? 'si' : 'fi';
+  const em = effMode(S), which = em === 'S' ? 'si' : em === 'M' && id === 'rearDial' ? 'si' : 'fi';
   if (which === 'fi') S.fi = clamp(S.fi + dir, 0, F_STOPS.length - 1); else S.si = clamp(S.si + dir, 0, SHUTTERS.length - 1);
   const E = expose(S), off = E.stops - E.target;          // in A and S the camera balances the other setting, until it runs out of range
-  if (S.mode === 'S' && off > 0.4) return `Too bright: at ${fmtSS(E.den)} even the smallest aperture, ${fmtF(E.N).replace('F', 'f/')}, lets in too much light. In real snow you would need a darker filter.`;
-  if (S.mode === 'S' && off < -0.4) return `Too dark: the lens cannot open wider than ${fmtF(E.N).replace('F', 'f/')}. Slow the shutter or raise ISO.`;
-  if (S.mode !== 'M' && off > 0.4) return `Too bright: the shutter cannot go faster than ${fmtSS(E.den)}.`;
-  if (S.mode === 'M') return Math.abs(E.stops) < 0.2 ? 'Balanced: the meter reads zero.' : `The meter reads ${fmtEV(Math.round(clamp(E.stops, -5, 5) * 3))}: ${E.stops > 0 ? 'too bright' : 'too dark'}.`;
+  if (em === 'S' && off > 0.4) return `Too bright: at ${fmtSS(E.den)} even the smallest aperture, ${fmtF(E.N).replace('F', 'f/')}, lets in too much light. In real snow you would need a darker filter.`;
+  if (em === 'S' && off < -0.4) return `Too dark: the lens cannot open wider than ${fmtF(E.N).replace('F', 'f/')}. Slow the shutter or raise ISO.`;
+  if (em !== 'M' && off > 0.4) return `Too bright: the shutter cannot go faster than ${fmtSS(E.den)}.`;
+  if (em === 'M') return Math.abs(E.stops) < 0.2 ? 'Balanced: the meter reads zero.' : `The meter reads ${fmtEV(Math.round(clamp(E.stops, -5, 5) * 3))}: ${E.stops > 0 ? 'too bright' : 'too dark'}.`;
   return '';
 }
 
@@ -426,12 +435,13 @@ let active = null;                                  // { type: 'task', task, i, 
 function buildLists() {
   let n = 0;
   const groups = [...new Set(TASKS.map((t) => t.group))];
-  listTasks.innerHTML = groups.map((g) => `<div class="grp"><p class="grp__name label">${g}</p>${TASKS.filter((t) => t.group === g).map((t) => `<button type="button" class="item" style="--n:${n}" data-task="${t.id}"><i>${String(++n).padStart(2, '0')}</i><span>${esc(t.title)}</span><em>${t.steps.length} ${t.steps.length > 1 ? 'steps' : 'step'}</em></button>`).join('')}</div>`).join('');
+  const recipes = `<div class="grp grp--rcp"><p class="grp__name label">Snow recipes</p>${RECIPES.map((r) => `<button type="button" class="item" style="--n:${9 + r.n}" data-task="r${r.n}"><i>R${r.n}</i><span>${esc(r.title)}</span><em>${r.mode} · ${fmtEV(r.ev)}</em></button>`).join('')}</div>`;
+  listTasks.innerHTML = groups.map((g) => `${g === 'Focus and shooting' ? recipes : ''}<div class="grp"><p class="grp__name label">${g}</p>${TASKS.filter((t) => t.group === g).map((t) => `<button type="button" class="item" style="--n:${n}" data-task="${t.id}"><i>${String(++n).padStart(2, '0')}</i><span>${esc(t.title)}</span><em>${t.steps.length} ${t.steps.length > 1 ? 'steps' : 'step'}</em></button>`).join('')}</div>`).join('');
   listParts.innerHTML = FACES.map((f) => `<div class="grp"><p class="grp__name label">${f}</p>${Object.entries(CONTROLS).filter(([, c]) => c.face === f).map(([id, c]) => `<button type="button" class="item" data-control="${id}"><i>·</i><span>${esc(c.name)}</span></button>`).join('')}</div>`).join('');
   TASKS.forEach((t, i) => { t.no = i + 1; });
 }
 function markList() {
-  $$('.item').forEach((b) => b.classList.toggle('is-on', !!active && ((active.type === 'task' && b.dataset.task === active.task.id) || (active.type === 'control' && b.dataset.control === active.id))));
+  $$('.item').forEach((b) => b.classList.toggle('is-on', !!active && ((active.type === 'task' && b.dataset.task === (active.task.listId || active.task.id)) || (active.type === 'control' && b.dataset.control === active.id))));
 }
 function setTab(which) {
   const tasks = which === 'tasks', was = !listTasks.hidden;
@@ -451,12 +461,12 @@ function reveal(userAction) {
 const SCREEN_NAME = { live: 'Live view', ev: 'Exposure comp.', iso: 'ISO', drive: 'Drive mode', fn: 'Function menu', menu: 'Menu', play: 'Playback', index: 'Image index', delete: 'Delete?', send: 'Send to phone' };
 function updateNow() {
   const E = expose(S), on = S.power;
-  const vals = { mode: S.mode, ss: fmtSS(E.den), f: fmtF(E.N).replace('F', 'f/'), ev: fmtEV(S.mode === 'M' ? Math.round(clamp(E.stops, -5, 5) * 3) : S.ev), iso: `${E.auto ? 'A ' : ''}${E.iso}` };
-  const mine = { ss: E.mine.ss, f: E.mine.f, ev: S.mode !== 'M' && S.ev !== 0 };
+  const vals = { mode: /^[123]$/.test(S.mode) ? `${S.mode}·${E.mode}` : S.mode, ss: fmtSS(E.den), f: fmtF(E.N).replace('F', 'f/'), ev: fmtEV(E.mode === 'M' ? Math.round(clamp(E.stops, -5, 5) * 3) : S.ev), iso: `${E.auto ? 'A ' : ''}${E.iso}` };
+  const mine = { ss: E.mine.ss, f: E.mine.f, ev: E.mode !== 'M' && S.ev !== 0 };
   nowEl.classList.toggle('is-off', !on);
   for (const cell of $$('[data-k]', nowEl)) {
     const k = cell.dataset.k, dd = cell.lastElementChild, v = on ? vals[k] : '–';
-    if (k === 'ev') cell.firstElementChild.textContent = S.mode === 'M' ? 'Meter' : '±';
+    if (k === 'ev') cell.firstElementChild.textContent = E.mode === 'M' ? 'Meter' : '±';
     cell.classList.toggle('is-mine', on && !!mine[k]);
     if (dd.textContent !== v) { dd.textContent = v; restart(dd, 'is-tick'); }
   }
@@ -471,10 +481,11 @@ function say(text) { if (sayEl.textContent === text) { restart(sayEl, 'is-in'); 
 const EDGE_LABEL = { wheelUp: ['↑', 'Press the top edge'], wheelDown: ['↓', 'Press the bottom edge'], wheelLeft: ['←', 'Press the left edge'], wheelRight: ['→', 'Press the right edge'] };
 const pressBtn = (id, label) => `<button type="button" class="try__b" data-act="press" data-id="${id}">${label}</button>`;
 const turnBtns = (id) => `<button type="button" class="try__b" data-act="turn" data-id="${id}" data-dir="-1" aria-label="Turn one click back">← Turn</button><button type="button" class="try__b" data-act="turn" data-id="${id}" data-dir="1" aria-label="Turn one click forward">Turn →</button>`;
-function tryBox(spec, open = false) {
+function tryBox(spec, open = false, ui = null) {
   if (!spec) return '';
   const [kind, a, b] = spec; let how, btns;
-  if (kind === 'press') { how = 'Click the orange control on the model, or use this button.'; btns = pressBtn(a, EDGE_LABEL[a] ? EDGE_LABEL[a][1] : { monitor: 'Tap the screen', power: 'Flick the switch', lensRelease: 'Press and twist', shutter: 'Press the shutter' }[a] || 'Press it'); }
+  if (ui) { how = ui.how; btns = ui.btns.map(([act, id, dir, label]) => `<button type="button" class="try__b" data-act="${act}" data-id="${id}" data-dir="${dir}">${label}</button>`).join(''); }
+  else if (kind === 'press') { how = 'Click the orange control on the model, or use this button.'; btns = pressBtn(a, EDGE_LABEL[a] ? EDGE_LABEL[a][1] : { monitor: 'Tap the screen', power: 'Flick the switch', lensRelease: 'Press and twist', shutter: 'Press the shutter' }[a] || 'Press it'); }
   else if (kind === 'pressAny') { how = 'Click one of the wheel\'s edges on the model, or use these.'; btns = a.map((id) => `<button type="button" class="try__b try__b--sq" data-act="press" data-id="${id}" aria-label="${EDGE_LABEL[id][1]}">${EDGE_LABEL[id][0]}</button>`).join(''); }
   else if (kind === 'turn') { how = 'Drag across the orange dial on the model, scroll over it, or use these.'; btns = turnBtns(a); }
   else if (a === 'mode') { how = `Turn the dial until <b>${b}</b> sits at the white mark. Drag it on the model, or use these.`; btns = turnBtns('modeDial'); }
@@ -490,42 +501,114 @@ const TICK = '<svg class="step__tick" viewBox="0 0 24 24" aria-hidden="true"><pa
 function stateFor(task, k) { return Object.assign(defaults(), task.init || {}, ...task.steps.slice(0, k).map((s) => s.result || {})); }
 function resetTo(task, k) { clearTimers(); const before = screenKey(); S = stateFor(task, k); if (S.rec) setRec(true); sync(screenKey() !== before); }
 
-function openTask(id, i = 0, userAction = false) {
-  const task = TASKS.find((t) => t.id === id); if (!task) return;
-  active = { type: 'task', task, i: clamp(i, 0, task.steps.length - 1), done: [] };
+/* ═════════════ snow recipes: generated tasks, and the 1 · 2 · 3 memory on the mode dial ═════════════ */
+const MEM_KEY = 'a6700-memory';
+let memory = {}; try { memory = JSON.parse(localStorage.getItem(MEM_KEY) || '{}') || {}; } catch (_) { /* private mode */ }
+const recipeCache = {};
+const wheelUI = (edge, where, goal) => ({ how: `On the model: click the ${where} edge of the wheel, drag the wheel round to <b>${goal}</b>, then click its centre. Or use these.`, btns: [['press', edge, 1, edge === 'wheelRight' ? 'Press ISO' : 'Press ±'], ['turn', 'wheel', -1, '← Turn'], ['turn', 'wheel', 1, 'Turn →'], ['press', 'wheelCenter', 1, 'Confirm']] });
+function recipeTask(id) {
+  const m = /^r([1-6])(m?)$/.exec(id); if (!m) return null;
+  if (recipeCache[id]) return recipeCache[id];
+  const r = RECIPES[+m[1] - 1], manual = !!m[2];
+  const fi = r.f ? F_STOPS.indexOf(r.f) : -1, si = r.ss ? SHUTTERS.indexOf(r.ss) : -1, iso = ISOS.indexOf(r.iso);
+  const E = expose(Object.assign(defaults(), { mode: r.mode, ev: r.ev, iso, light: r.light }, fi >= 0 ? { fi } : { si }));
+  const other = (i) => (i === 9 ? 6 : 9);                 // a starting value that is not already the answer
+  const f = (N) => fmtF(N).replace('F', 'f/');
+  const modeStep = (mode, why) => ({ c: 'modeDial', do: `<b>Turn the mode dial to ${mode}</b> ${why}`, try: ['state', 'mode', mode], result: { mode } });
+  const dialStep = (c, key, idx) => {
+    const label = key === 'fi' ? fmtF(F_STOPS[idx]) : fmtSS(SHUTTERS[idx]), name = c === 'frontDial' ? 'front dial' : 'rear dial';
+    return { c, do: `<b>Roll the ${name}</b> until the screen reads <b>${label}</b>.`, try: ['state', key, idx], result: { [key]: idx }, ui: { how: `Drag across the orange dial on the model, scroll over it, or use these, until it reads <b>${label}</b>.`, btns: [['turn', c, -1, '← Turn'], ['turn', c, 1, 'Turn →']] } };
+  };
+  const isoStep = (idx) => { const label = idx === 0 ? 'ISO AUTO' : `ISO ${ISOS[idx]}`; return { c: 'wheelRight', do: `<b>Press the right edge of the wheel (ISO)</b>, turn the wheel to <b>${label}</b>, then press the centre.`, try: ['all', { iso: idx, screen: 'live' }], result: { iso: idx, screen: 'live' }, ui: wheelUI('wheelRight', 'right', label) }; };
+  const evStep = (ev) => ({ c: 'wheelDown', do: `<b>Press the bottom edge of the wheel (±)</b>, turn the wheel to <b>${fmtEV(ev)}</b>, then press the centre.`, try: ['all', { ev, screen: 'live' }], result: { ev, screen: 'live' }, ui: wheelUI('wheelDown', 'bottom', fmtEV(ev)) });
+  const init = { mode: 'P', light: r.light, mm: r.mm, disp: 1, ev: 0 };
+  const lightName = r.light <= -5 ? 'blue-hour' : r.light <= -2 ? 'storm' : 'bright';
+  let steps, table, auto;
+  if (!manual) {
+    init.iso = iso === 0 ? 1 : 0; if (fi >= 0) init.fi = other(fi); else init.si = other(si);
+    steps = [modeStep(r.mode, r.mode === 'A' ? '(you choose the aperture).' : '(you choose the shutter speed).'), fi >= 0 ? dialStep('frontDial', 'fi', fi) : dialStep('frontDial', 'si', si), isoStep(iso), evStep(r.ev)];
+    table = [['Mode', r.mode], ['Aperture', fi >= 0 ? f(r.f) : 'auto'], ['Shutter', si >= 0 ? fmtSS(r.ss) : 'auto'], ['ISO', iso === 0 ? 'auto' : String(r.iso)], ['±', fmtEV(r.ev)]];
+    auto = `The camera fills in the rest. In ${lightName} light it lands on about <b>${fi >= 0 ? fmtSS(E.den) : f(E.N)}</b>${iso === 0 ? ` at <b>ISO ${E.iso}</b>` : ''}.`;
+  } else {
+    const mfi = F_STOPS.indexOf(E.N), msi = SHUTTERS.indexOf(E.den), miso = ISOS.indexOf(E.iso);
+    init.iso = miso === 1 ? 2 : 1; init.fi = other(mfi); init.si = other(msi);
+    steps = [modeStep('M', '(you choose everything).'), dialStep('frontDial', 'fi', mfi), dialStep('rearDial', 'si', msi), isoStep(miso)];
+    table = [['Mode', 'M'], ['Aperture', f(E.N)], ['Shutter', fmtSS(E.den)], ['ISO', String(E.iso)], ['Meter', fmtEV(Math.round(E.stops * 3))]];
+    auto = `The same recipe with nothing left to the camera, worked out for ${lightName} light. The meter reads <b>${fmtEV(Math.round(E.stops * 3))}</b> on purpose: that is the recipe's brightening, done by hand. If the light changes, you change the numbers.`;
+  }
+  return (recipeCache[id] = { id, listId: `r${r.n}`, recipe: r, manual, group: 'Snow recipes', title: r.title, intro: r.what, init, steps, table, auto, more: ['index.html#snow', 'Read the Snow chapter'] });
+}
+const findTask = (id) => TASKS.find((t) => t.id === id) || recipeTask(id);
+function recipeHead(task) {
+  const r = task.recipe;
+  return `<div class="rcp">
+    <div class="rcp__pick" role="group" aria-label="Choose a snow recipe">${RECIPES.map((q) => `<button type="button" data-rcp="${q.n}" class="${q.n === r.n ? 'is-on' : ''}" aria-pressed="${q.n === r.n}" aria-label="Recipe ${q.n}: ${q.title}" title="${q.title}">${q.n}</button>`).join('')}</div>
+    <div class="seg rcp__mode" role="group" aria-label="How to set it"><button type="button" class="seg__b${task.manual ? '' : ' is-on'}" data-manual="0" aria-pressed="${!task.manual}">As written <span>${r.mode} mode, the camera helps</span></button><button type="button" class="seg__b${task.manual ? ' is-on' : ''}" data-manual="1" aria-pressed="${task.manual}">Fully manual <span>M mode, you set all three</span></button></div>
+    <dl class="recipe__set rcp__set">${task.table.map(([k, v], i) => `<div${i === 4 ? ' class="is-key"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <p class="rcp__auto">${task.auto}</p>
+    <p class="rcp__tip"><b>${r.lens}.</b> ${r.tip}</p>
+    <div class="rcp__go"><button type="button" class="btn" data-guide>Set it myself, step by step</button><button type="button" class="link" data-apply>Show it set</button></div>
+  </div>`;
+}
+const memBox = () => `<div class="mem"><p class="label">Keep it on the mode dial</p><p class="mem__how">Save what the camera is set to now into position 1, 2 or 3. From then on, turning the mode dial to that number brings the whole recipe back. On the real camera: MENU, Shooting, Shooting Mode, Camera Set. Memory.</p><div class="mem__btns">${[1, 2, 3].map((n) => `<button type="button" data-save="${n}" aria-label="Save to position ${n}"><b>${n}</b><span>${memory[n] ? esc(memory[n].name) : 'Empty'}</span></button>`).join('')}</div></div>`;
+function saveMemory(n) {
+  const { task } = active;
+  memory[n] = { name: task.title + (effMode(S) === 'M' ? ' (M)' : ''), mode: effMode(S), fi: S.fi, si: S.si, iso: S.iso, ev: S.ev };
+  try { localStorage.setItem(MEM_KEY, JSON.stringify(memory)); } catch (_) { /* ignore */ }
+  const b = $(`[data-save="${n}"] span`, body); b.textContent = memory[n].name; restart(b, 'is-tick');
+  say(`Saved to ${n}. Turn the mode dial to ${n} and the camera recalls it.`);
+}
+function applyRecipe() {                                  // set the whole recipe at once and show the result on the rear screen
+  const { task } = active;
+  active.applied = true; active.i = -1; active.done = task.steps.map(() => true);
+  resetTo(task, task.steps.length); paintSteps(); highlight(null); operated = true;
+  if (M) flyTo(180, 6, 300, M.reg.monitor.anchor);
+  say(`Recipe ${task.recipe.n} is set${task.manual ? ', fully manual' : ''}. The screen on the back shows the result.`);
+}
+
+function openTask(id, i = 0, userAction = false, guided) {
+  const task = findTask(id); if (!task) return;
+  const rcp = task.recipe, wasRcp = !!active && active.type === 'task' && !!active.task.recipe;
+  if (guided === undefined) guided = !rcp;               // a recipe opens already set; an ordinary task opens ready to be tried
+  active = { type: 'task', task, i: clamp(i, 0, task.steps.length - 1), done: [], applied: false };
   setTab('tasks'); markList();
-  const n = task.steps.length, next = TASKS[task.no % TASKS.length];
+  const n = task.steps.length, next = rcp ? recipeTask(`r${rcp.n % 6 + 1}${task.manual ? 'm' : ''}`) : TASKS[task.no % TASKS.length];
   body.innerHTML = `
-    <p class="label panel__kicker">Task ${String(task.no).padStart(2, '0')} · ${task.group}</p>
+    <p class="label panel__kicker">${rcp ? `Snow recipe ${rcp.n} of 6 · ${task.manual ? 'Fully manual' : 'As written'}` : `Task ${String(task.no).padStart(2, '0')} · ${task.group}`}</p>
     <h2 class="panel__title">${esc(task.title)}</h2>
     <p class="panel__intro">${task.intro}</p>
+    ${rcp ? recipeHead(task) : ''}
     <div class="prog" aria-hidden="true">${task.steps.map(() => '<i></i>').join('')}</div>
-    <ol class="steps">${task.steps.map((s, k) => `<li class="step" data-k="${k}"><button type="button" class="step__head" data-step="${k}"><span class="step__no">${k + 1}${TICK}</span><span><span class="step__on">${esc(CONTROLS[s.c].name)}</span><span class="step__do">${s.do}</span></span></button>${tryBox(s.try)}</li>`).join('')}</ol>
+    <ol class="steps">${task.steps.map((s, k) => `<li class="step" data-k="${k}"><button type="button" class="step__head" data-step="${k}"><span class="step__no">${k + 1}${TICK}</span><span><span class="step__on">${esc(CONTROLS[s.c].name)}</span><span class="step__do">${s.do}</span></span></button>${tryBox(s.try, false, s.ui)}</li>`).join('')}</ol>
     ${n > 1 ? '<div class="stepnav"><button type="button" class="btn btn--ghost" data-go="-1">Back</button><button type="button" class="btn" data-go="1">Next step</button><span class="stepnav__count"></span></div>' : ''}
-    <div class="done" hidden><p class="label">Done</p><p class="done__msg">That is the whole move. Do it once on the real camera and it will stick.</p><div class="done__btns"><button type="button" class="btn" data-task="${next.id}">Next: ${esc(next.title)}</button><button type="button" class="link" data-again>Again</button></div></div>
+    <div class="done" hidden><p class="label">Done</p><p class="done__msg">${rcp ? 'Recipe set by hand. The camera now matches the table above.' : 'That is the whole move. Do it once on the real camera and it will stick.'}</p><div class="done__btns"><button type="button" class="btn" data-task="${next.id}">Next: ${esc(next.title)}</button><button type="button" class="link" data-again>Again</button></div></div>
     <div class="panel__note"><b class="label">Where it is</b><span id="where"></span></div>
+    ${rcp ? memBox() : ''}
     ${task.more ? `<a class="panel__more" href="${task.more[0]}">${task.more[1]} →</a>` : ''}`;
-  restart(body, 'is-enter');
-  resetTo(task, active.i); say(task.steps[active.i].try ? 'Your turn: the camera on the left is live.' : '');
-  paintSteps(); showControl(task.steps[active.i].c);
+  if (rcp && wasRcp) { body.classList.remove('is-enter'); restart($('.panel__title', body), 'is-tick'); restart($('.rcp__set', body), 'is-tick'); } else restart(body, 'is-enter');   // switching recipes swaps the numbers in place
+  if (rcp && !guided) applyRecipe();
+  else { resetTo(task, active.i); say(task.steps[active.i].try ? 'Your turn: the camera on the left is live.' : ''); paintSteps(); showControl(task.steps[active.i].c); }
   reveal(userAction); setHash(`t=${id}`);
 }
 function paintSteps() {
-  const { task, i, done } = active, n = task.steps.length;
+  const { task, i, done } = active, n = task.steps.length, applied = !!active.applied;
   $$('.step', body).forEach((li, k) => {
     li.classList.toggle('is-on', k === i); li.classList.toggle('is-done', !!done[k]);
     const b = li.firstElementChild; k === i ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current');
   });
   $$('.prog i', body).forEach((el, k) => { el.classList.toggle('is-done', !!done[k]); el.classList.toggle('is-on', k === i); });
   const back = $('[data-go="-1"]', body), fwd = $('[data-go="1"]', body), cnt = $('.stepnav__count', body);
-  if (back) { back.disabled = i === 0; fwd.disabled = i === n - 1; cnt.innerHTML = `${i + 1}<small> / ${n}</small>`; }
-  const w = $('#where'), text = CONTROLS[task.steps[i].c].where;
-  if (w.textContent !== text) { w.textContent = text; restart(w, 'is-tick'); }
-  const all = i === n - 1 && task.steps.every((s, k) => !s.try || done[k]), fin = $('.done', body);
+  const nav = $('.stepnav', body), note = $('.panel__note', body); if (nav) nav.hidden = applied; note.hidden = applied;
+  if (back && !applied) { back.disabled = i === 0; fwd.disabled = i === n - 1; cnt.innerHTML = `${i + 1}<small> / ${n}</small>`; }
+  const w = $('#where'), text = applied ? '' : CONTROLS[task.steps[i].c].where;
+  if (!applied && w.textContent !== text) { w.textContent = text; restart(w, 'is-tick'); }
+  $('.steps', body).classList.toggle('is-summary', applied);
+  const all = !applied && i === n - 1 && task.steps.every((s, k) => !s.try || done[k]), fin = $('.done', body);
   if (fin.hidden === all) { fin.hidden = !all; if (all) restart(fin, 'is-in'); }
 }
 function goStep(k, rebuild) {
   const { task } = active; k = clamp(k, 0, task.steps.length - 1);
+  if (active.applied) { active.applied = false; active.done = []; rebuild = true; }
   active.i = k; if (rebuild) resetTo(task, k);
   paintSteps(); showControl(task.steps[k].c);
   if (PHONE.matches) $('.step.is-on', body)?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });   // park the new step just under the pinned camera
@@ -535,10 +618,11 @@ function met(spec, ev) {
   if (kind === 'press') return ev.kind === 'press' && ev.id === a;
   if (kind === 'pressAny') return ev.kind === 'press' && a.includes(ev.id);
   if (kind === 'turn') return ev.kind === 'turn' && ev.id === a;
+  if (kind === 'all') return Object.entries(a).every(([k, v]) => S[k] === v);
   return S[a] === b;
 }
 function checkStep(ev) {
-  if (!active || active.type !== 'task') return;
+  if (!active || active.type !== 'task' || active.applied) return;
   const { task, i, done } = active, step = task.steps[i];
   if (!step.try || done[i] || !met(step.try, ev)) return;
   done[i] = true; paintSteps();
@@ -579,14 +663,20 @@ function bindUI() {
   });
   body.addEventListener('click', (e) => {
     const a = e.target.closest('[data-act]'), s = e.target.closest('[data-step]'), g = e.target.closest('[data-go]'), t = e.target.closest('[data-task]'), again = e.target.closest('[data-again]');
+    const pickR = e.target.closest('[data-rcp]'), man = e.target.closest('[data-manual]'), save = e.target.closest('[data-save]');
     if (a) act(a.dataset.id, a.dataset.act, +a.dataset.dir || 1);
+    else if (pickR) openTask(`r${pickR.dataset.rcp}${active.task.manual ? 'm' : ''}`, 0, false, !active.applied);
+    else if (man) openTask(`r${active.task.recipe.n}${man.dataset.manual === '1' ? 'm' : ''}`, 0, false, !active.applied);
+    else if (save) saveMemory(+save.dataset.save);
+    else if (e.target.closest('[data-guide]')) { active.applied = true; goStep(0, true); say('Your turn: set it on the camera, one step at a time.'); }
+    else if (e.target.closest('[data-apply]')) applyRecipe();
     else if (s) goStep(+s.dataset.step, true);
     else if (g && !g.disabled) { goStep(active.i + +g.dataset.go, true); ($(`[data-go="${g.dataset.go}"]:not([disabled])`, body) || $('[data-go]:not([disabled])', body))?.focus({ preventScroll: true }); }
-    else if (again) openTask(active.task.id, 0, true);
+    else if (again) openTask(active.task.id, 0, true, true);
     else if (t) openTask(t.dataset.task, +t.dataset.at || 0, true);
   });
   document.addEventListener('keydown', (e) => {
-    if (!active || active.type !== 'task' || e.target.closest('input, textarea, [role="tab"]')) return;
+    if (!active || active.type !== 'task' || active.applied || e.target.closest('input, textarea, [role="tab"]')) return;
     const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return;
     const i = clamp(active.i + d, 0, active.task.steps.length - 1); if (i !== active.i) goStep(i, true);
   });
