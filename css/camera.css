@@ -123,20 +123,51 @@
 .panel__intro + .panel__intro { margin-top: .7em; }
 .panel h3.label { margin: 26px 0 0; color: var(--ink-2); padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
 
-.steps { counter-reset: st; }
-.step { counter-increment: st; border-bottom: 1px solid var(--rule); }
-.step button { display: grid; grid-template-columns: 40px 1fr; width: 100%; text-align: left; padding: 13px 0 14px; align-items: start; }
-.step button::before { content: counter(st); font-family: var(--sans); font-stretch: 62%; font-weight: 800; font-size: 1.75rem; line-height: 1; color: var(--ink-2); }
-.step__on { display: block; font-family: var(--sans); font-stretch: 112%; font-weight: 600; font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 3px; }
-.step__do { display: block; font-size: 1.0625rem; line-height: 1.4; color: var(--ink-2); }
+/* steps: the active one slides open, a finished one draws a tick */
+.prog { display: flex; gap: 4px; margin-top: 20px; }
+.prog i { flex: 1; height: 3px; background: var(--rule); position: relative; overflow: hidden; }
+.prog i::after { content: ""; position: absolute; inset: 0; background: var(--orange); transform: scaleX(0); transform-origin: 0 50%; transition: transform .55s var(--ease); }
+.prog i.is-on::after { transform: scaleX(.34); }
+.prog i.is-done::after { transform: scaleX(1); }
+.steps { margin-top: 6px; }
+.step { position: relative; border-bottom: 1px solid var(--rule); }
+.step::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--orange); transform: scaleY(0); transform-origin: 50% 0; transition: transform .4s var(--ease); }
+.step.is-on::before { transform: scaleY(1); }
+.step__head { display: grid; grid-template-columns: 40px 1fr; width: 100%; text-align: left; padding: 13px 0 14px; align-items: start; transition: padding-left .4s var(--ease); }
+.step.is-on .step__head { padding-left: 14px; }
+.step__no { position: relative; font-family: var(--sans); font-stretch: 62%; font-weight: 800; font-size: 1.75rem; line-height: 1; color: var(--ink-2); transition: color .25s var(--ease-ui); }
+.step__tick { position: absolute; left: -3px; top: 0; width: 27px; height: 27px; fill: none; stroke: var(--orange-ink); stroke-width: 3.2; stroke-dasharray: 24; stroke-dashoffset: 24; }
+.step.is-done .step__no { color: transparent; }
+.step.is-done .step__tick { stroke-dashoffset: 0; transition: stroke-dashoffset .5s var(--ease) .08s; }
+.step__on { display: block; font-family: var(--sans); font-stretch: 112%; font-weight: 600; font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 3px; transition: color .25s var(--ease-ui); }
+.step__do { display: block; font-size: 1.0625rem; line-height: 1.4; color: var(--ink-2); transition: color .25s var(--ease-ui); }
 .step__do b { color: var(--ink); }
-.step.is-on { background: linear-gradient(var(--orange), var(--orange)) 0 0 / 3px 100% no-repeat; }
-.step.is-on button { padding-left: 14px; }
-.step.is-on button::before { color: var(--orange-ink); }
-.step.is-on .step__on { color: var(--orange-ink); }
-.step.is-on .step__do { color: var(--ink); }
-.step button:hover .step__do { color: var(--ink); }
-.step button:focus-visible { outline-offset: -3px; }
+.step.is-on .step__no, .step.is-on .step__on { color: var(--orange-ink); }
+.step.is-on.is-done .step__no { color: transparent; }
+.step.is-on .step__do, .step__head:hover .step__do { color: var(--ink); }
+.step__head:focus-visible { outline-offset: -3px; }
+
+/* try it: a box that opens under the active step */
+.try { display: grid; grid-template-rows: 0fr; margin-left: 54px; transition: grid-template-rows .45s var(--ease), margin-bottom .45s var(--ease); }
+.try__in { min-height: 0; overflow: hidden; background: var(--shade); }
+.step.is-on .try { grid-template-rows: 1fr; margin-bottom: 14px; }
+.try.is-open { grid-template-rows: 1fr; margin: 18px 0 0; }
+.try__head { color: var(--orange-ink); padding: 12px 14px 0; }
+.try__how { padding: 4px 14px 0; font-size: .9375rem; line-height: 1.4; color: var(--ink-2); }
+.try__how b { color: var(--ink); }
+.try__btns { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px 14px; }
+.try__b { border: 1px solid var(--ink); background: var(--paper); padding: 11px 14px 12px; min-height: 44px; font-family: var(--sans); font-weight: 600; font-size: .8125rem; letter-spacing: .03em; transition: background-color .12s var(--ease-ui), color .12s var(--ease-ui), transform .08s var(--ease-ui); }
+@media (hover: hover) { .try__b:hover { background: var(--ink); color: var(--snow); } }
+.try__b:active { transform: translateY(1px) scale(.97); background: var(--orange); color: var(--night); border-color: var(--orange); }
+.try__b--sq { width: 44px; padding: 0; font-size: 1.125rem; }
+
+.done { margin-top: 18px; padding: 16px 16px 18px; background: var(--ink); color: var(--snow); }
+.done[hidden] { display: none; }
+.done .label { color: var(--orange); }
+.done__msg { font-size: 1.0625rem; line-height: 1.4; margin: 6px 0 14px; }
+.done__btns { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.done .link { color: var(--snow); }
+.done.is-in { animation: rise .55s var(--ease) both; }
 
 .stepnav { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
 .stepnav .btn { padding: 13px 18px; }
@@ -168,7 +199,8 @@
 @media (max-width: 760px) {
   .campage { overflow: auto; height: auto; }
   .cam { position: static; display: block; padding-top: var(--navh); }
-  .stage { position: sticky; top: var(--navh); z-index: 4; height: 44svh; min-height: 260px; border-bottom: 1px solid var(--ink); }
+  .cam { --stageh: max(42svh, 250px); }
+  .stage { position: sticky; top: var(--navh); z-index: 4; height: var(--stageh); border-bottom: 1px solid var(--ink); }
   .stage__face { font-size: 3.25rem; left: var(--gut); top: 10px; }
   .stage__hint { display: none; }
   .stage__hud { left: 0; right: 0; bottom: 0; gap: 0; flex-wrap: nowrap; align-items: stretch; }
@@ -181,9 +213,10 @@
   .pin__tag b { font-size: .625rem; padding: 6px 8px; }
   .panel { overflow: visible; padding: 20px var(--gut) 28px; border-top: 0; min-height: 0; }
   .panel__empty .legend { display: none; }
-  .stepnav { position: sticky; bottom: 0; z-index: 2; margin: 0 calc(var(--gut) * -1); padding: 10px var(--gut) calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--snow); border-top: 1px solid var(--ink); }
+  .stepnav { margin-top: 16px; }
   .cam__list { padding-bottom: env(safe-area-inset-bottom, 0px); }
-  .step { scroll-margin-top: calc(var(--navh) + 44svh + 12px); scroll-margin-bottom: 76px; }
+  .step, .panel__title { scroll-margin-top: calc(var(--navh) + var(--stageh) + 10px); scroll-margin-bottom: 16px; }
+  .panel { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
   .cam__list { display: block; border-right: 0; border-top: 2px solid var(--ink); }
   .cam__head { padding: 22px var(--gut) 16px; }
   .cam__scroll { overflow: visible; }
@@ -193,7 +226,7 @@
   .cam { display: flex; flex-direction: column; }
   .stage { order: 1; } .panel { order: 2; } .cam__list { order: 3; }
 }
-@media (max-width: 760px) and (max-height: 620px) { .stage { height: 50svh; min-height: 220px; } }
+@media (max-width: 760px) and (max-height: 620px) { .cam { --stageh: max(38svh, 200px); } }
 
 @media (max-width: 350px) {
   .views button { padding: 13px 5px; letter-spacing: .05em; font-size: .5938rem; }
@@ -222,8 +255,87 @@
   .views button { flex: 1 0 auto; padding: 12px 7px; }
   .views button span, .lensbtn span { display: none; }
   .lensbtn { border-width: 1px 0 0 1px; padding: 11px 12px; }
-  .stepnav { position: sticky; bottom: 0; z-index: 2; margin: 0 calc(var(--gut) * -1) 0 -20px; padding: 8px var(--gut) calc(8px + env(safe-area-inset-bottom, 0px)) 20px; background: var(--snow); border-top: 1px solid var(--ink); }
-  .step { scroll-margin-top: calc(var(--navh) + 12px); scroll-margin-bottom: 70px; }
+  .stepnav { margin-top: 14px; }
+  .step { scroll-margin-top: calc(var(--navh) + 12px); scroll-margin-bottom: 16px; }
+}
+
+/* ───────── the read-out: what the camera is set to right now ───────── */
+.now { position: sticky; top: -26px; z-index: 3; margin: -26px calc(var(--gut) * -1) 22px -28px; padding: 15px 28px 11px; background: var(--night); color: var(--frost); }
+.now[hidden] { display: none; }
+.now__head { display: flex; justify-content: space-between; gap: 12px; color: var(--frost-2); white-space: nowrap; }
+.now__head span { color: var(--orange); display: inline-block; }
+.now__set { display: grid; grid-template-columns: minmax(0, .72fr) minmax(0, 1.3fr) minmax(0, 1.12fr) minmax(0, 1fr) minmax(0, .95fr); margin-top: 9px; border: 1px solid rgba(232, 238, 242, .3); font-family: var(--sans); }
+.now__set > div { padding: 7px 8px 8px; overflow: hidden; }
+.now__set > div + div { border-left: 1px solid rgba(232, 238, 242, .18); }
+.now__set dt { font-stretch: 88%; font-size: .625rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--frost-2); transition: color .25s var(--ease-ui); }
+.now__set dd { font-stretch: 70%; font-weight: 750; font-size: 1.25rem; line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; transition: color .25s var(--ease-ui), opacity .25s var(--ease-ui); }
+.now__set .is-mine dt, .now__set .is-mine dd { color: var(--orange); }
+.now.is-off dd { opacity: .35; }
+.is-tick { animation: tick .34s var(--ease); }
+@keyframes tick { from { transform: translateY(42%); opacity: 0; } }
+.now__say { min-height: 2.7em; margin-top: 9px; font-size: .9375rem; line-height: 1.35; color: #cfd9e0; }
+.now__say.is-in { animation: sayin .45s var(--ease); }
+@keyframes sayin { from { opacity: 0; transform: translateX(-8px); } }
+#where { display: block; }
+
+/* ───────── motion ───────── */
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+.panel__body.is-enter > * { animation: rise .55s var(--ease) both; animation-delay: calc(var(--i, 8) * 45ms); }
+.panel__body.is-enter > :nth-child(1) { --i: 0; } .panel__body.is-enter > :nth-child(2) { --i: 1; } .panel__body.is-enter > :nth-child(3) { --i: 2; }
+.panel__body.is-enter > :nth-child(4) { --i: 3; } .panel__body.is-enter > :nth-child(5) { --i: 4; } .panel__body.is-enter > :nth-child(6) { --i: 5; }
+.panel__body.is-enter > :nth-child(7) { --i: 6; } .panel__body.is-enter > :nth-child(8) { --i: 7; }
+.panel__empty > * { animation: rise .6s var(--ease) both; }
+.panel__empty > :nth-child(2) { animation-delay: 70ms; } .panel__empty > :nth-child(3) { animation-delay: 140ms; }
+
+/* list rows arrive in sequence, and slide a little under the pointer */
+@keyframes itemin { from { opacity: 0; transform: translateX(-10px); } }
+.item { animation: itemin .5s var(--ease) both; animation-delay: calc(min(var(--n, 0), 16) * 26ms + 120ms); transition: background-color .25s var(--ease-ui), color .25s var(--ease-ui), box-shadow .3s var(--ease); }
+.item span { transition: transform .22s var(--ease); }
+.item:hover span { transform: translateX(3px); }
+.item.is-on { box-shadow: inset 4px 0 0 var(--orange); }
+.cam__head > * { animation: rise .6s var(--ease) both; }
+.cam__head > :nth-child(2) { animation-delay: 60ms; } .cam__head > :nth-child(3) { animation-delay: 120ms; }
+
+/* the pin waits for the camera to arrive, then draws itself */
+.stage.is-flying .pin { opacity: 0; transition-duration: .1s; }
+@keyframes pindot { from { transform: scale(2.6); opacity: 0; } }
+@keyframes pinline { from { transform: scaleX(0); } }
+@keyframes pintag { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@keyframes pintagl { from { opacity: 0; clip-path: inset(0 0 0 100%); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+.pin.is-in .pin__dot { animation: pindot .5s var(--ease) both; }
+.pin__tag::before { transform-origin: 0 50%; }
+.pin.is-left .pin__tag::before { transform-origin: 100% 50%; }
+.pin.is-in .pin__tag::before { animation: pinline .32s var(--ease) .16s both; }
+.pin.is-in .pin__tag b { animation: pintag .38s var(--ease) .3s both; }
+.pin.is-in.is-left .pin__tag b { animation-name: pintagl; }
+
+@keyframes face { from { opacity: 0; transform: translateY(16px); } }
+.stage__face.is-in { animation: face .6s var(--ease) both; }
+.stage.is-turnable canvas, .stage.is-dial canvas { cursor: ew-resize; }
+.stage__hint { max-width: 44ch; line-height: 1.5; }
+.views button, .lensbtn { transition: background-color .2s var(--ease-ui), color .2s var(--ease-ui); }
+.tabs button { transition: background-color .25s var(--ease-ui), color .25s var(--ease-ui); }
+
+/* on phones the read-out scrolls away, so the camera view carries a compact copy */
+.stage__now { display: none; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .stage__now { display: flex; gap: 10px; position: absolute; right: 0; top: 0; z-index: 3; margin: 0; padding: 7px 10px 8px; background: var(--night); color: var(--frost); font-family: var(--sans); font-stretch: 75%; font-weight: 700; font-size: .9375rem; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
+  .stage__now b { color: var(--frost-2); font-weight: 800; }
+  .stage__now .is-mine { color: var(--orange); }
+  .cam:not(:has(.panel__body:not([hidden]))) .stage__now { display: none; }
+}
+@media (max-width: 1180px) { .now { top: -20px; margin: -20px -28px 18px; padding: 13px 28px 10px; } }
+@media (max-width: 760px) {
+  .now { position: static; margin: -20px calc(var(--gut) * -1) 18px; padding: 12px var(--gut) 9px; }
+  .now__set dd { font-size: 1.1875rem; }
+  .now__say { min-height: 2.6em; }
+  .try { margin-left: 0; }
+  .step.is-on .try { margin-left: 14px; }
+}
+@media (max-width: 350px) { .now__set dd { font-size: 1.0625rem; } .now__set > div { padding: 6px 5px 7px; } .now__set dt { letter-spacing: .02em; } }
+@media (max-height: 500px) and (orientation: landscape) {
+  .now { position: static; margin: -16px calc(var(--gut) * -1) 14px -20px; padding: 10px var(--gut) 8px 20px; }
+  .try { margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { .pin__dot::after { animation: none; opacity: 0; } }
