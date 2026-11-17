@@ -3,6 +3,7 @@
    ("Names of parts", "Control wheel", "Front dial and rear dial", exposure-mode pages).
    view = [yaw°, pitch°, distance]: how the model turns to show the control. */
 
+
 export const FACES = ['Top', 'Back', 'Front', 'Sides and bottom'];
 
 export const CONTROLS = {
@@ -158,7 +159,7 @@ export const CONTROLS = {
     what: 'Unlocks the lens. Hold it in while you twist the lens off.',
   },
   mount: {
-    name: 'Mount and image sensor', face: 'Front', view: [-10, 4, 290], lens: false,
+    name: 'Mount and image sensor', face: 'Front', view: [-10, 4, 290],
     where: 'Front, behind the lens. Take the lens off to see it.',
     what: 'The metal ring is the mount the lens locks onto. The rectangle behind it is the sensor, the part that actually records the picture.',
     facts: [['Never', 'Touch the sensor or the row of gold contacts.'], ['Dust', 'Keep a lens or the body cap on. Change lenses with the camera pointing down.']],
@@ -199,137 +200,143 @@ export const CONTROLS = {
   },
 };
 
-/* step: c = control id, do = instruction, plus optional model state:
-   dial 'AUTO'|'P'|'A'|'S'|'M', sms 'still'|'movie'|'sq', lcd screen mode, lens false = lens removed */
+/* A task is a short sequence of steps on the model.
+   init   = how the camera is set before the first step (on top of the defaults)
+   step.c = the control to show
+   step.try    = what the learner has to do on the model for the step to count:
+                 ['press', id] · ['pressAny', [ids]] · ['turn', id] · ['state', key, value]
+   step.result = the state that action leaves behind (used when a step is skipped with Next) */
+const EDGES = ['wheelUp', 'wheelDown', 'wheelLeft', 'wheelRight'];
+
 export const TASKS = [
-  { id: 'on', group: 'Start here', title: 'Switch it on',
+  { id: 'on', group: 'Start here', title: 'Switch it on', init: { power: false },
     intro: 'The power switch is wrapped around the shutter button so one finger does both.',
-    steps: [{ c: 'power', do: '<b>Flick the collar to ON</b> with your index finger. The screen lights up.', lcd: 'live' }] },
-  { id: 'shoot', group: 'Start here', title: 'Take a photo',
+    steps: [{ c: 'power', do: '<b>Flick the collar to ON</b> with your index finger. The screen lights up.', try: ['state', 'power', true], result: { power: true } }] },
+  { id: 'shoot', group: 'Start here', title: 'Take a photo', init: { sms: 'movie', mode: 'P' },
     intro: 'Three controls, in order. After the first week you will only touch the last one.',
     steps: [
-      { c: 'smsDial', do: '<b>Set the lower ring to the still-photo position</b> so the camera is taking pictures, not video.', sms: 'still' },
-      { c: 'modeDial', do: '<b>Turn the mode dial to A.</b> Or to AUTO if you want the camera to decide everything for now.', dial: 'A', sms: 'still' },
-      { c: 'shutter', do: '<b>Press halfway and hold.</b> The camera focuses. <b>Then press all the way down</b>, gently.', dial: 'A', lcd: 'focus' },
+      { c: 'smsDial', do: '<b>Set the lower ring to the still-photo position</b> so the camera is taking pictures, not video.', try: ['state', 'sms', 'still'], result: { sms: 'still' } },
+      { c: 'modeDial', do: '<b>Turn the mode dial to A.</b> Or to AUTO if you want the camera to decide everything for now.', try: ['state', 'mode', 'A'], result: { mode: 'A' } },
+      { c: 'shutter', do: '<b>Press halfway and hold.</b> The camera focuses. <b>Then press all the way down</b>, gently.', try: ['press', 'shutter'] },
     ] },
-  { id: 'mode', group: 'Start here', title: 'Pick a shooting mode',
+  { id: 'mode', group: 'Start here', title: 'Pick a shooting mode', init: { sms: 'movie', mode: 'AUTO' },
     intro: 'Two dials stacked on one axle. The bottom one chooses photo or video; the top one chooses how much you control.',
     steps: [
-      { c: 'smsDial', do: '<b>Lower ring:</b> still photos, movie, or S&Q (slow and quick motion).', sms: 'still' },
-      { c: 'modeDial', do: '<b>Upper dial:</b> AUTO, P, A, S or M. Leave it on A for your first month.', dial: 'A' },
+      { c: 'smsDial', do: '<b>Lower ring:</b> still photos, movie, or S&Q (slow and quick motion). Put it on still.', try: ['state', 'sms', 'still'], result: { sms: 'still' } },
+      { c: 'modeDial', do: '<b>Upper dial:</b> AUTO, P, A, S or M. Turn it to A and leave it there for your first month.', try: ['state', 'mode', 'A'], result: { mode: 'A' } },
     ] },
   { id: 'evf', group: 'Start here', title: 'Use the viewfinder',
     intro: 'In bright snow the rear screen washes out. The viewfinder doesn\'t.',
     steps: [
       { c: 'evf', do: '<b>Lift the camera to your eye.</b> The picture moves from the monitor to the viewfinder by itself.' },
-      { c: 'diopter', do: '<b>Turn this small dial</b> until the numbers inside the viewfinder look sharp. You only do this once.' },
+      { c: 'diopter', do: '<b>Turn this small dial</b> until the numbers inside the viewfinder look sharp. You only do this once.', try: ['turn', 'diopter'] },
     ] },
   { id: 'disp', group: 'Start here', title: 'Show the histogram',
     intro: 'The histogram is the graph the Snow chapter tells you to trust. It is one of the screen layouts.',
-    steps: [{ c: 'wheelUp', do: '<b>Press the top edge of the control wheel (DISP).</b> Each press changes the layout. Keep pressing until the graph appears.', lcd: 'histo' }],
+    steps: [{ c: 'wheelUp', do: '<b>Press the top edge of the control wheel (DISP).</b> Each press changes the layout. Keep pressing until the graph appears.', try: ['state', 'disp', 1], result: { disp: 1 } }],
     more: ['index.html#snow', 'Why the histogram matters'] },
 
-  { id: 'aperture', group: 'Exposure', title: 'Blur the background',
+  { id: 'aperture', group: 'Exposure', title: 'Blur the background', init: { mode: 'P' },
     intro: 'Aperture is the size of the hole in the lens. A low f-number blurs the background.',
     steps: [
-      { c: 'modeDial', do: '<b>Turn the mode dial to A</b> (aperture priority).', dial: 'A' },
-      { c: 'frontDial', do: '<b>Roll the front dial</b> with your index finger. Watch the F number change: low for blur, high for everything sharp.', dial: 'A', lcd: 'f' },
+      { c: 'modeDial', do: '<b>Turn the mode dial to A</b> (aperture priority).', try: ['state', 'mode', 'A'], result: { mode: 'A' } },
+      { c: 'frontDial', do: '<b>Roll the front dial</b> with your index finger. Watch the F number change: low for blur, high for everything sharp. The camera moves the shutter speed to match.', try: ['turn', 'frontDial'], result: { fi: 3 } },
     ],
     more: ['index.html#exposure', 'Try it in the exposure simulator'] },
-  { id: 'shutter', group: 'Exposure', title: 'Freeze or blur motion',
+  { id: 'shutter', group: 'Exposure', title: 'Freeze or blur motion', init: { mode: 'A' },
     intro: 'Shutter speed is how long the camera looks. Fast freezes, slow smears.',
     steps: [
-      { c: 'modeDial', do: '<b>Turn the mode dial to S</b> (shutter priority).', dial: 'S' },
-      { c: 'frontDial', do: '<b>Roll the front dial.</b> 1/1000 freezes a skier; 1/30 turns falling snow into streaks.', dial: 'S', lcd: 'ss' },
+      { c: 'modeDial', do: '<b>Turn the mode dial to S</b> (shutter priority).', try: ['state', 'mode', 'S'], result: { mode: 'S' } },
+      { c: 'frontDial', do: '<b>Roll the front dial.</b> 1/1000 freezes a skier; 1/30 turns falling snow into streaks. The camera moves the aperture to match.', try: ['turn', 'frontDial'], result: { si: 21 } },
     ],
     more: ['index.html#exposure', 'Try it in the exposure simulator'] },
-  { id: 'manual', group: 'Exposure', title: 'Set both yourself',
+  { id: 'manual', group: 'Exposure', title: 'Set both yourself', init: { mode: 'A' },
     intro: 'Manual mode gives each of your two fingers its own dial.',
     steps: [
-      { c: 'modeDial', do: '<b>Turn the mode dial to M.</b>', dial: 'M' },
-      { c: 'frontDial', do: '<b>Front dial, index finger: aperture.</b>', dial: 'M', lcd: 'f' },
-      { c: 'rearDial', do: '<b>Rear dial, thumb: shutter speed.</b> Watch the ± scale on screen and aim for zero.', dial: 'M', lcd: 'ss' },
+      { c: 'modeDial', do: '<b>Turn the mode dial to M.</b>', try: ['state', 'mode', 'M'], result: { mode: 'M' } },
+      { c: 'frontDial', do: '<b>Front dial, index finger: aperture.</b> Nothing compensates now, so the picture gets brighter or darker.', try: ['turn', 'frontDial'], result: { fi: 6 } },
+      { c: 'rearDial', do: '<b>Rear dial, thumb: shutter speed.</b> Watch M.M. on the screen and bring it back to ±0.0.', try: ['turn', 'rearDial'], result: { si: 6 } },
     ] },
   { id: 'iso', group: 'Exposure', title: 'Change ISO',
     intro: 'ISO brightens the picture without more light, at the cost of grain. It has its own shortcut.',
     steps: [
-      { c: 'wheelRight', do: '<b>Press the right edge of the control wheel</b>, marked ISO.', lcd: 'iso' },
-      { c: 'wheel', do: '<b>Turn the wheel</b> to pick a number, or AUTO to let the camera choose.', lcd: 'iso' },
-      { c: 'wheelCenter', do: '<b>Press the centre</b> to confirm.', lcd: 'iso' },
+      { c: 'wheelRight', do: '<b>Press the right edge of the control wheel</b>, marked ISO.', try: ['press', 'wheelRight'], result: { screen: 'iso' } },
+      { c: 'wheel', do: '<b>Turn the wheel</b> to pick a number, or AUTO to let the camera choose.', try: ['turn', 'wheel'], result: { iso: 3 } },
+      { c: 'wheelCenter', do: '<b>Press the centre</b> to confirm.', try: ['press', 'wheelCenter'], result: { screen: 'live' } },
     ] },
   { id: 'ev', group: 'Exposure', title: 'Make it brighter or darker',
     intro: 'Exposure compensation, the ± control. In snow, this is the one that turns grey back into white.',
     steps: [
-      { c: 'wheelDown', do: '<b>Press the bottom edge of the control wheel</b>, marked ±.', lcd: 'ev' },
-      { c: 'wheel', do: '<b>Turn the wheel</b> towards + to brighten. For snow, start at +1.', lcd: 'ev' },
-      { c: 'wheelCenter', do: '<b>Press the centre</b> to confirm. Remember to set it back to 0 afterwards.', lcd: 'ev' },
+      { c: 'wheelDown', do: '<b>Press the bottom edge of the control wheel</b>, marked ±.', try: ['press', 'wheelDown'], result: { screen: 'ev' } },
+      { c: 'wheel', do: '<b>Turn the wheel</b> towards + to brighten. For snow, start at +1.', try: ['turn', 'wheel'], result: { ev: 3 } },
+      { c: 'wheelCenter', do: '<b>Press the centre</b> to confirm. Remember to set it back to 0 afterwards.', try: ['press', 'wheelCenter'], result: { screen: 'live' } },
     ],
     more: ['index.html#snow', 'Why snow needs +1'] },
 
   { id: 'afon', group: 'Focus and shooting', title: 'Focus with your thumb',
     intro: 'You can focus without touching the shutter button at all.',
-    steps: [{ c: 'afon', do: '<b>Hold AF-ON with your thumb.</b> The camera focuses and, in AF-C, keeps following the subject for as long as you hold it.', lcd: 'focus' }] },
+    steps: [{ c: 'afon', do: '<b>Hold AF-ON with your thumb.</b> The camera focuses and, in AF-C, keeps following the subject for as long as you hold it.', try: ['press', 'afon'] }] },
   { id: 'touch', group: 'Focus and shooting', title: 'Choose what to focus on',
     intro: 'The quickest way to tell the camera what matters is to point at it.',
-    steps: [{ c: 'monitor', do: '<b>Tap the subject on the screen.</b> With touch operation switched on, the camera focuses there.', lcd: 'focus' }] },
+    steps: [{ c: 'monitor', do: '<b>Tap the subject on the screen.</b> With touch operation switched on, the camera focuses there.', try: ['press', 'monitor'] }] },
   { id: 'drive', group: 'Focus and shooting', title: 'Burst or self-timer',
     intro: 'Drive mode decides what one press of the shutter does.',
     steps: [
-      { c: 'wheelLeft', do: '<b>Press the left edge of the control wheel.</b>', lcd: 'drive' },
-      { c: 'wheel', do: '<b>Turn the wheel</b> to choose single shot, continuous shooting or a self-timer.', lcd: 'drive' },
-      { c: 'wheelCenter', do: '<b>Press the centre</b> to confirm.', lcd: 'drive' },
+      { c: 'wheelLeft', do: '<b>Press the left edge of the control wheel.</b>', try: ['press', 'wheelLeft'], result: { screen: 'drive' } },
+      { c: 'wheel', do: '<b>Turn the wheel</b> to choose single shot, continuous shooting or a self-timer.', try: ['turn', 'wheel'], result: { drive: 1 } },
+      { c: 'wheelCenter', do: '<b>Press the centre</b> to confirm.', try: ['press', 'wheelCenter'], result: { screen: 'live' } },
     ] },
   { id: 'fn', group: 'Focus and shooting', title: 'Reach common settings fast',
     intro: 'The Function menu is a grid of the settings people change most. Learn this before the full menu.',
     steps: [
-      { c: 'fn', do: '<b>Press Fn.</b> A grid of settings appears over the picture.', lcd: 'fn' },
-      { c: 'wheel', do: '<b>Press the edges of the wheel</b> to move to the setting you want.', lcd: 'fn' },
-      { c: 'frontDial', do: '<b>Roll the front dial</b> to change it on the spot, or press the wheel\'s centre to open it fully.', lcd: 'fn' },
+      { c: 'fn', do: '<b>Press Fn.</b> A grid of settings appears over the picture.', try: ['press', 'fn'], result: { screen: 'fn' } },
+      { c: 'wheel', do: '<b>Press the edges of the wheel</b> to move to the setting you want.', try: ['pressAny', EDGES], result: { sel: 1 } },
+      { c: 'frontDial', do: '<b>Roll the front dial</b> to change it on the spot, or press the wheel\'s centre to open it fully.', try: ['turn', 'frontDial'] },
     ] },
   { id: 'menu', group: 'Focus and shooting', title: 'Open the full menu',
     intro: 'Everything else lives here: File Format, Focus Area, Zebra Display, Grid Line Display and hundreds more.',
     steps: [
-      { c: 'menu', do: '<b>Press MENU.</b>', lcd: 'menu' },
-      { c: 'wheel', do: '<b>Press the wheel\'s edges</b> to move between sections and items. Turning it scrolls.', lcd: 'menu' },
-      { c: 'wheelCenter', do: '<b>Press the centre</b> to open an item and again to confirm. MENU steps back out.', lcd: 'menu' },
+      { c: 'menu', do: '<b>Press MENU.</b>', try: ['press', 'menu'], result: { screen: 'menu' } },
+      { c: 'wheel', do: '<b>Press the wheel\'s top or bottom edge</b> to move between items. Turning it scrolls.', try: ['pressAny', ['wheelUp', 'wheelDown']], result: { sel: 1 } },
+      { c: 'wheelCenter', do: '<b>Press the centre</b> to open an item and again to confirm. MENU steps back out.', try: ['press', 'wheelCenter'] },
     ],
     more: ['index.html#setup', 'The twelve settings worth changing'] },
 
   { id: 'play', group: 'Review and video', title: 'Look at your photos',
     intro: 'Check sharpness on the spot, not when you get home.',
     steps: [
-      { c: 'playback', do: '<b>Press Playback.</b> Your latest photo appears.', lcd: 'play' },
-      { c: 'wheel', do: '<b>Turn the wheel</b> to move through your photos.', lcd: 'play' },
-      { c: 'afon', do: '<b>Press AF-ON to enlarge</b> and check the eyes are sharp.', lcd: 'zoom' },
-      { c: 'shutter', do: '<b>Half-press the shutter</b> to jump straight back to shooting.', lcd: 'live' },
+      { c: 'playback', do: '<b>Press Playback.</b> Your latest photo appears.', try: ['press', 'playback'], result: { screen: 'play' } },
+      { c: 'wheel', do: '<b>Turn the wheel</b> to move through your photos.', try: ['turn', 'wheel'], result: { play: 9 } },
+      { c: 'afon', do: '<b>Press AF-ON to enlarge</b> and check the eyes are sharp.', try: ['press', 'afon'], result: { zoomed: true } },
+      { c: 'shutter', do: '<b>Half-press the shutter</b> to jump straight back to shooting.', try: ['press', 'shutter'], result: { screen: 'live', zoomed: false } },
     ] },
   { id: 'delete', group: 'Review and video', title: 'Delete a photo',
     intro: 'The camera always asks before it deletes.',
     steps: [
-      { c: 'playback', do: '<b>Press Playback</b> and find the photo.', lcd: 'play' },
-      { c: 'del', do: '<b>Press the button marked with a bin.</b>', lcd: 'delete' },
-      { c: 'wheelCenter', do: '<b>Choose Delete and press the centre</b> to confirm.', lcd: 'delete' },
+      { c: 'playback', do: '<b>Press Playback</b> and find the photo.', try: ['press', 'playback'], result: { screen: 'play' } },
+      { c: 'del', do: '<b>Press the button marked with a bin.</b>', try: ['press', 'del'], result: { screen: 'delete' } },
+      { c: 'wheelCenter', do: '<b>Choose Delete and press the centre</b> to confirm.', try: ['press', 'wheelCenter'], result: { screen: 'play' } },
     ] },
   { id: 'phone', group: 'Review and video', title: 'Send a photo to your phone',
     intro: 'Needs Sony\'s Creators\' App on your phone, paired with the camera once.',
     steps: [
-      { c: 'playback', do: '<b>Press Playback</b> and find the photo.', lcd: 'play' },
-      { c: 'fn', do: '<b>Press Fn.</b> During playback it becomes Send to Smartphone.', lcd: 'play' },
+      { c: 'playback', do: '<b>Press Playback</b> and find the photo.', try: ['press', 'playback'], result: { screen: 'play' } },
+      { c: 'fn', do: '<b>Press Fn.</b> During playback it becomes Send to Smartphone.', try: ['press', 'fn'], result: { screen: 'send' } },
     ] },
-  { id: 'video', group: 'Review and video', title: 'Record a video',
+  { id: 'video', group: 'Review and video', title: 'Record a video', init: { sms: 'still' },
     intro: 'Two controls: tell the camera you want video, then start it.',
     steps: [
-      { c: 'smsDial', do: '<b>Move the lower ring to the movie position.</b>', sms: 'movie', lcd: 'live' },
-      { c: 'movie', do: '<b>Press MOVIE to start.</b> Press it again to stop.', sms: 'movie', lcd: 'rec' },
+      { c: 'smsDial', do: '<b>Move the lower ring to the movie position.</b>', try: ['state', 'sms', 'movie'], result: { sms: 'movie' } },
+      { c: 'movie', do: '<b>Press MOVIE to start.</b> Press it again to stop.', try: ['press', 'movie'], result: { rec: true } },
     ] },
 
   { id: 'lens', group: 'Looking after it', title: 'Change the lens',
     intro: 'Do it indoors or with your back to the wind, camera pointing down, and never in falling snow.',
     steps: [
-      { c: 'power', do: '<b>Switch the camera off.</b>', lcd: 'off' },
-      { c: 'lensRelease', do: '<b>Hold the lens release button in</b> and twist the lens until it stops, then lift it away.', lcd: 'off' },
-      { c: 'mount', do: '<b>Don\'t touch anything in here.</b> That rectangle is the sensor. Get the other lens on quickly.', lens: false, lcd: 'off' },
-      { c: 'lens', do: '<b>Line up the white marks</b> on the lens and the mount, push together, and twist until it clicks.', lcd: 'off' },
+      { c: 'power', do: '<b>Switch the camera off.</b>', try: ['state', 'power', false], result: { power: false } },
+      { c: 'lensRelease', do: '<b>Hold the lens release button in</b> and twist the lens until it stops, then lift it away.', try: ['state', 'lens', false], result: { lens: false } },
+      { c: 'mount', do: '<b>Don\'t touch anything in here.</b> That rectangle is the sensor. Get the other lens on quickly.' },
+      { c: 'mount', do: '<b>Line up the white marks</b> on the lens and the mount, push together, and twist until it clicks.', try: ['state', 'lens', true], result: { lens: true } },
     ],
     more: ['index.html#lenses', 'Which lens for which job'] },
   { id: 'card', group: 'Looking after it', title: 'Put the memory card in',
@@ -347,8 +354,8 @@ export const TASKS = [
   { id: 'custom', group: 'Looking after it', title: 'Find the custom buttons',
     intro: 'Three buttons are yours to assign in MENU under Custom Key/Dial Set. Here is where they are.',
     steps: [
-      { c: 'c1', do: '<b>C1</b> is on the side of the body, at the outer edge of the thumb rest.' },
-      { c: 'c2', do: '<b>C2</b> is on top of the grip, beside the shutter button.' },
-      { c: 'del', do: '<b>C3</b> is the Delete button. It only deletes during playback, so while shooting it is free.' },
+      { c: 'c1', do: '<b>C1</b> is on the side of the body, at the outer edge of the thumb rest.', try: ['press', 'c1'] },
+      { c: 'c2', do: '<b>C2</b> is on top of the grip, beside the shutter button.', try: ['press', 'c2'] },
+      { c: 'del', do: '<b>C3</b> is the Delete button. It only deletes during playback, so while shooting it is free.', try: ['press', 'del'] },
     ] },
 ];
