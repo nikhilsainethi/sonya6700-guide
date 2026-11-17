@@ -34,7 +34,7 @@
     <header class="cam__head">
       <p class="label cam__no">Chapter 00</p>
       <h1 class="display cam__title">Find it on<br>the camera</h1>
-      <p class="cam__lede">Pick what you want to do. The camera turns to show you where to put your finger.</p>
+      <p class="cam__lede">Pick what you want to do. The camera turns to show you where to put your finger, then lets you try it.</p>
     </header>
     <div class="tabs" role="tablist" aria-label="Browse by">
       <button type="button" role="tab" id="tabTasks" aria-selected="true" aria-controls="listTasks" class="is-on">I want to…</button>
@@ -58,6 +58,7 @@
     <div class="tip label" id="tip" hidden aria-hidden="true"></div>
 
     <p class="stage__face display" id="faceName" aria-hidden="true">Front</p>
+    <p class="stage__now" id="stageNow" aria-hidden="true"></p>
 
     <div class="stage__hud">
       <div class="views" role="group" aria-label="Turn the camera to a side">
@@ -70,7 +71,7 @@
       </div>
       <button type="button" class="lensbtn" id="lensBtn" aria-pressed="true"><i></i><span>Lens attached</span></button>
     </div>
-    <p class="stage__hint label" id="hint">Drag to turn · scroll or pinch to zoom · click any control</p>
+    <p class="stage__hint label" id="hint">Drag to turn · scroll or pinch to zoom · click a button to press it · drag a dial to turn it</p>
 
     <div class="stage__fallback" id="fallback" hidden>
       <p class="label">3D view unavailable</p>
@@ -79,13 +80,25 @@
   </section>
 
   <!-- ── right: the answer ── -->
-  <section class="panel" id="panel" aria-live="polite" tabindex="-1">
+  <section class="panel" id="panel" tabindex="-1">
+    <div class="now" id="now" hidden>
+      <p class="label now__head">Camera now<span id="nowScreen">Live view</span></p>
+      <dl class="now__set">
+        <div data-k="mode"><dt>Mode</dt><dd>A</dd></div>
+        <div data-k="ss"><dt>Shutter</dt><dd>1/500</dd></div>
+        <div data-k="f"><dt>Aperture</dt><dd>f/8.0</dd></div>
+        <div data-k="ev"><dt>±</dt><dd>±0.0</dd></div>
+        <div data-k="iso"><dt>ISO</dt><dd>100</dd></div>
+      </dl>
+      <p class="now__say" id="say" aria-live="polite"></p>
+    </div>
     <div class="panel__empty" id="panelEmpty">
       <p class="label">Nothing selected yet</p>
       <p class="panel__big">Choose a task from the list, or click any button or dial on the camera.</p>
       <ul class="legend">
         <li><i class="legend__dot"></i>Orange marks the control to use</li>
         <li><i class="legend__key">1 2 3</i>Tasks with several steps turn the camera between each one</li>
+        <li><i class="legend__key">Try</i>The camera works: press its buttons, turn its dials, and watch the screen on its back</li>
       </ul>
     </div>
     <article class="panel__body" id="panelBody" hidden></article>

@@ -3,7 +3,8 @@
 A single-page beginner's guide to photography, written for a Sony a6700 with the
 Sigma 18–50mm f/2.8 and Sony E 18–135mm f/3.5–5.6.
 
-- **00 Camera** (`camera.html`) — an interactive 3D a6700: pick a task and the camera turns to show which button or dial to use
+- **00 Camera** (`camera.html`) — an interactive 3D a6700: pick a task and the camera turns to show which button or dial to use.
+  The model works: press its buttons, drag its dials, and the rear screen and exposure respond, so each step can be tried on the spot
 - **01 Exposure** — aperture, shutter speed and ISO, with a live simulator
 - **02 Lenses** — what each lens is for, with a focal-length visualiser
 - **03 Snow** — why snow comes out grey, six starting recipes, cold-weather care
@@ -29,3 +30,4 @@ three.js (MIT) is vendored in `vendor/`.
 
 Control names and default functions in the 3D chapter follow Sony's ILCE-6700 Help Guide. The model is a hand-built
 diagram of where the controls are, not a scan of the product, so proportions and small details are approximate.
+The rear-screen displays and the exposure behaviour are simplified teaching versions, not copies of Sony's menus or metering.
