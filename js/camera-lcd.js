@@ -23,6 +23,8 @@ const photo = (i) => ({ mm: ZOOMS[(i * 2) % 5], N: [8, 2.8, 5.6, 11][i % 4], den
 
 export const defaults = () => ({
   power: true, sms: 'still', mode: 'A', fi: 9, si: 9, iso: 1, ev: 0, drive: 0, mm: 18, lens: true,
+  light: 0,          // how bright the scene is, in stops relative to sunlit snow (0); storm light is about −3, blue hour −6
+  as: null,          // on dial positions 1, 2, 3: the exposure mode of the setup that was recalled
   screen: 'live', disp: 0, sel: 0, half: false, rec: false, recT: 0, play: 11, zoomed: false,
   fn: [0, 2, 4, 1, 0, 0, 0, 1, 0, 0, 0, 0], photos: Array.from({ length: 12 }, (_, i) => photo(i)), msg: '',
 });
@@ -33,23 +35,26 @@ export const fmtEV = (thirds) => (thirds === 0 ? '±0.0' : `${thirds > 0 ? '+' :
 const stopsOf = (N, den, iso) => 2 * Math.log2(8 / N) + Math.log2(500 / den) + Math.log2(iso / 100);
 const nearest = (list, want, from = 0) => { let b = from, bd = Infinity; for (let i = from; i < list.length; i++) { const d = Math.abs(Math.log2(list[i] / want)); if (d < bd) { bd = d; b = i; } } return b; };
 
-/* What the camera would set, given what the photographer has set. The scene is sunlit snow:
-   f/8 at 1/500 and ISO 100 is "correct" (0 stops). */
+/* the exposure mode in force: positions 1, 2, 3 behave as whatever was saved to them (P if empty) */
+export const effMode = (S) => (/^[123]$/.test(S.mode) ? S.as || 'P' : S.mode);
+
+/* What the camera would set, given what the photographer has set. In sunlit snow (light 0),
+   f/8 at 1/500 and ISO 100 is "correct" (0 stops). Dimmer scenes shift everything by S.light stops. */
 export function expose(S) {
-  const m = S.mode, auto = S.iso === 0, target = m === 'AUTO' ? 0 : S.ev / 3;
+  const m = effMode(S), auto = S.iso === 0, target = m === 'AUTO' ? 0 : S.ev / 3, L = S.light || 0, need = target - L;
   let N = m === 'AUTO' ? 8 : F_STOPS[S.fi], den = SHUTTERS[S.si], iso = auto ? 100 : ISOS[S.iso];
   if (m === 'S') {
-    let want = 8 / 2 ** ((target - Math.log2(500 / den) - Math.log2(iso / 100)) / 2);
-    if (auto && want < 2.8) { iso = ISOS[Math.min(7, nearest(ISOS, 100 * (2.8 / want) ** 2, 1))]; want = 8 / 2 ** ((target - Math.log2(500 / den) - Math.log2(iso / 100)) / 2); }
+    let want = 8 / 2 ** ((need - Math.log2(500 / den) - Math.log2(iso / 100)) / 2);
+    if (auto && want < 2.8) { iso = ISOS[Math.min(7, nearest(ISOS, 100 * (2.8 / want) ** 2, 1))]; want = 8 / 2 ** ((need - Math.log2(500 / den) - Math.log2(iso / 100)) / 2); }
     N = F_STOPS[nearest(F_STOPS, want)];
   } else if (m === 'M') {
-    if (auto) iso = ISOS[Math.min(7, nearest(ISOS, 100 * 2 ** (target - 2 * Math.log2(8 / N) - Math.log2(500 / den)), 1))];
+    if (auto) iso = ISOS[Math.min(7, nearest(ISOS, 100 * 2 ** (need - 2 * Math.log2(8 / N) - Math.log2(500 / den)), 1))];
   } else {
-    let want = 500 / 2 ** (target - 2 * Math.log2(8 / N) - Math.log2(iso / 100));
-    if (auto && want < 125) { iso = ISOS[Math.min(7, nearest(ISOS, 100 * 125 / want, 1))]; want = 500 / 2 ** (target - 2 * Math.log2(8 / N) - Math.log2(iso / 100)); }
+    let want = 500 / 2 ** (need - 2 * Math.log2(8 / N) - Math.log2(iso / 100));
+    if (auto && want < 125) { iso = ISOS[Math.min(7, nearest(ISOS, 100 * 125 / want, 1))]; want = 500 / 2 ** (need - 2 * Math.log2(8 / N) - Math.log2(iso / 100)); }
     den = SHUTTERS[nearest(SHUTTERS, want)];
   }
-  return { N, den, iso, auto, target, stops: stopsOf(N, den, iso), mine: { f: m === 'A' || m === 'M', ss: m === 'S' || m === 'M' } };
+  return { N, den, iso, auto, target, mode: m, stops: stopsOf(N, den, iso) + L, mine: { f: m === 'A' || m === 'M', ss: m === 'S' || m === 'M' } };
 }
 
 /* ───────── renderer ───────── */
@@ -66,14 +71,18 @@ export function createLCD(canvas) {
   const rr = (c, x, y, w, h, r) => { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); };
   let fade = null, blackUntil = 0, dirty = true;
 
+  const ZC = [268, 250];                                  // zooming in closes on the person, as it would if you framed them
+  const onScreen = (x, y, mm) => [ZC[0] + (x - ZC[0]) * mm / 18, ZC[1] + (y - ZC[1]) * mm / 18];
+
   /* the view through the lens */
   function scene(c, o) {
-    const z = o.mm / 18, cx = 470, cy = 236, tf = (k) => { k.translate(cx, cy); k.scale(z, z); k.translate(-cx, -cy); };
+    const z = o.mm / 18, cx = ZC[0], cy = ZC[1], tf = (k) => { k.translate(cx, cy); k.scale(z, z); k.translate(-cx, -cy); };
     c.save();
     if (o.punch) { c.translate(212, 236); c.scale(o.punch, o.punch); c.translate(-212, -236); }
     q.setTransform(1, 0, 0, 1, 0, 0); q.save(); tf(q);
-    const sky = q.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#6f97b8'); sky.addColorStop(1, '#cfdfea'); q.fillStyle = sky; q.fillRect(0, 0, W, H);
-    q.fillStyle = '#fbf6e8'; q.beginPath(); q.arc(560, 70, 24, 0, 7); q.fill();
+    const L = o.light || 0, mood = L <= -5 ? 2 : L <= -2 ? 1 : 0;            // 0 sunny, 1 overcast and snowing, 2 blue hour
+    const sky = q.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, ['#6f97b8', '#93a3ae', '#2f4868'][mood]); sky.addColorStop(1, ['#cfdfea', '#d3dadf', '#8ea4bd'][mood]); q.fillStyle = sky; q.fillRect(0, 0, W, H);
+    if (mood === 0) { q.fillStyle = '#fbf6e8'; q.beginPath(); q.arc(560, 70, 24, 0, 7); q.fill(); }
     q.fillStyle = '#8ba7be'; q.beginPath(); q.moveTo(0, 280); [[90, 170], [150, 225], [250, 110], [340, 215], [410, 160], [500, 240], [585, 135], [660, 215], [660, 330], [0, 330]].forEach(([x, y]) => q.lineTo(x, y)); q.fill();
     q.fillStyle = '#eff4f8'; q.beginPath(); q.moveTo(250, 110); [[220, 150], [240, 142], [252, 158], [268, 140], [284, 152]].forEach(([x, y]) => q.lineTo(x, y)); q.fill();
     q.beginPath(); q.moveTo(585, 135); [[560, 168], [577, 162], [588, 175], [602, 160], [616, 172]].forEach(([x, y]) => q.lineTo(x, y)); q.fill();
@@ -83,6 +92,8 @@ export function createLCD(canvas) {
     q.fillStyle = ORANGE; q.fillRect(466, 228, 6, 11); q.fillStyle = '#ffd27a'; q.fillRect(475, 227, 4, 4);
     q.fillStyle = '#f1f5f8'; q.beginPath(); q.moveTo(0, 322); q.bezierCurveTo(160, 296, 330, 332, 660, 304); q.lineTo(660, H); q.lineTo(0, H); q.fill();
     q.fillStyle = '#c9d6e0'; q.beginPath(); q.ellipse(430, 372, 120, 7, 0, 0, 7); q.fill();
+    if (mood) { q.fillStyle = mood === 2 ? 'rgba(38,66,112,.36)' : 'rgba(120,132,142,.2)'; q.fillRect(0, 0, W, H); }
+    if (mood === 2) { q.fillStyle = '#ffd27a'; q.fillRect(474, 226, 6, 6); }
     q.restore();
     const blur = Math.max(0, 26 / o.N - 2.6) * Math.sqrt(z);
     if (canBlur && blur > 0.8 && !o.fast) { c.filter = `blur(${blur.toFixed(1)}px)`; c.drawImage(bgC, 0, 0); c.filter = 'none'; } else c.drawImage(bgC, 0, 0);
@@ -95,7 +106,7 @@ export function createLCD(canvas) {
     c.restore();
     if (!o.fast) {                                          // falling snow: dots when the shutter is fast, streaks when slow
       const len = Math.min(120, Math.max(1.6, 1400 / o.den)); c.lineCap = 'round';
-      for (const f of flakes) { c.strokeStyle = `rgba(255,255,255,${(0.92 - len / 190) * (0.4 + f.z * 0.6)})`; c.lineWidth = 1.4 + f.z * 2.2; c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x - len * 0.2 * f.z, f.y - len * f.z - 0.01); c.stroke(); }
+      for (const f of mood === 1 ? flakes : flakes.slice(0, mood === 2 ? 30 : 22)) { c.strokeStyle = `rgba(255,255,255,${(0.92 - len / 190) * (0.4 + f.z * 0.6)})`; c.lineWidth = 1.4 + f.z * 2.2; c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x - len * 0.2 * f.z, f.y - len * f.z - 0.01); c.stroke(); }
       const grain = o.iso <= 200 ? 0 : Math.min(1, (Math.log2(o.iso / 100) - 1) / 6) ** 1.2 * 0.5;
       if (grain > 0.01) { c.globalAlpha = grain; c.globalCompositeOperation = 'overlay'; c.imageSmoothingEnabled = false; c.drawImage(noise, 0, 0, W, H); c.imageSmoothingEnabled = true; c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; }
     }
@@ -108,7 +119,7 @@ export function createLCD(canvas) {
   const badge = (s, x, y = 20, hot = false) => { F(b, 24, 700); const w = b.measureText(s).width + 20; b.fillStyle = hot ? ORANGE : 'rgba(0,0,0,.62)'; b.fillRect(x, y, w, 36); b.fillStyle = hot ? '#000' : '#fff'; b.fillText(s, x + 10, y + 19); return x + w + 8; };
   function bar(S, E, hot) {
     b.fillStyle = '#000'; b.fillRect(0, H - 54, W, 54);
-    const third = S.mode === 'M' ? `M.M. ${fmtEV(Math.round(Math.max(-5, Math.min(5, E.stops)) * 3))}` : fmtEV(S.ev);
+    const third = E.mode === 'M' ? `M.M. ${fmtEV(Math.round(Math.max(-5, Math.min(5, E.stops)) * 3))}` : fmtEV(S.ev);
     const items = [['ss', fmtSS(E.den), 24, E.mine.ss], ['f', fmtF(E.N), 170, E.mine.f], ['ev', third, 300, false], ['iso', `ISO ${E.auto ? 'A ' : ''}${E.iso}`, 482, false]];
     F(b, 27, 650);
     for (const [k, s, x, mine] of items) {
@@ -140,7 +151,7 @@ export function createLCD(canvas) {
     b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.textAlign = 'left'; b.textBaseline = 'middle';
     b.fillStyle = '#000'; b.fillRect(0, 0, W, H);
     if (!S.power || S.screen === 'off') return;
-    const E = expose(S), live = { mm: S.mm, N: E.N, den: E.den, iso: E.iso, stops: E.stops };
+    const E = expose(S), live = { mm: S.mm, N: E.N, den: E.den, iso: E.iso, stops: E.stops, light: S.light };
     const sc = S.screen;
     if (sc === 'play' || sc === 'delete' || sc === 'send') {
       const p = S.photos[S.play] || live;
@@ -176,12 +187,13 @@ export function createLCD(canvas) {
       } else {
         // live view
         if (S.disp !== 2) {
-          let x = badge(S.sms === 'movie' ? 'MOVIE' : S.sms === 'sq' ? 'S&Q' : S.mode, 22);
-          if (S.sms !== 'still') x = badge(S.mode, x);
+          const ml = /^[123]$/.test(S.mode) ? `${S.mode} · ${E.mode}` : S.mode;
+          let x = badge(S.sms === 'movie' ? 'MOVIE' : S.sms === 'sq' ? 'S&Q' : ml, 22);
+          if (S.sms !== 'still') x = badge(ml, x);
           if (S.rec) { b.fillStyle = '#e0202c'; b.beginPath(); b.arc(x + 14, 38, 10, 0, 7); b.fill(); F(b, 24, 700); b.fillStyle = '#fff'; b.fillText(`REC 0:${String(S.recT).padStart(2, '0')}`, x + 32, 39); }
           else { F(b, 17, 600); b.fillStyle = 'rgba(255,255,255,.9)'; b.textAlign = 'right'; b.fillText(`${DRIVES[S.drive].toUpperCase()}   ${S.mm} MM`, W - 22, 38); b.textAlign = 'left'; }
         }
-        if (S.half) brackets(176, 168, 72, 72, '#3fdc6a'); else brackets(W / 2 - 60, H / 2 - 70, 120, 90, 'rgba(255,255,255,.85)');
+        if (S.half) { const [fx, fy] = onScreen(212, 206, S.mm), k = 36 * Math.min(2, S.mm / 18); brackets(fx - k, fy - k, k * 2, k * 2, '#3fdc6a'); } else brackets(W / 2 - 60, H / 2 - 70, 120, 90, 'rgba(255,255,255,.85)');
         if (S.disp === 1) histogram(E.stops);
         if (sc === 'ev') {
           b.fillStyle = 'rgba(8,11,14,.9)'; b.fillRect(40, H - 172, W - 80, 104);
