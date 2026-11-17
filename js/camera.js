@@ -1,7 +1,7 @@
 /* a6700 Field Manual — Chapter 00: the 3D camera.
    The model is built from primitives at 1 unit = 1 mm (body 122 × 69 × 75 including grip and eyecup).
    It is a faithful diagram of where the controls are, not a scan of the product. */
-import * as THREE from 'three';
+import * as THREE from '../vendor/three.module.min.js';
 import { RoomEnvironment } from '../vendor/RoomEnvironment.js';
 import { CONTROLS, TASKS, FACES } from './camera-data.js';
 
@@ -11,6 +11,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const rad = (d) => d * Math.PI / 180;
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PHONE = matchMedia('(max-width: 760px), (max-height: 500px) and (orientation: landscape)');   // layouts where the page scrolls
 const INK = '#0e1418', ORANGE = '#ff5a1f';
 
 /* ═════════════ model ═════════════ */
@@ -321,7 +322,7 @@ function drawLCD(c, mode, letter = 'A') {
     g.fillStyle = '#eff4f8'; g.beginPath(); g.moveTo(250, 110); g.lineTo(220, 150); g.lineTo(240, 142); g.lineTo(252, 158); g.lineTo(268, 140); g.lineTo(284, 152); g.fill();
     g.fillStyle = '#f1f5f8'; g.beginPath(); g.moveTo(0, 318); g.bezierCurveTo(160, 290, 320, 330, 660, 300); g.lineTo(660, H); g.lineTo(0, H); g.fill();
     g.fillStyle = '#1a262f'; g.fillRect(196, 300, 14, 62); g.fillRect(214, 300, 14, 62);
-    g.fillStyle = ORANGE; g.beginPath(); g.roundRect(186, 226, 52, 92, 16); g.fill();
+    g.fillStyle = ORANGE; g.beginPath(); g.roundRect ? g.roundRect(186, 226, 52, 92, 16) : g.rect(186, 226, 52, 92); g.fill();
     g.fillStyle = '#e9b994'; g.beginPath(); g.arc(212, 206, 17, 0, 7); g.fill();
     g.fillStyle = INK; g.beginPath(); g.arc(212, 203, 18, Math.PI, 0); g.fill();
     g.restore();
@@ -589,8 +590,8 @@ function setTab(which) {
 const setHash = (h) => history.replaceState(null, '', h ? `#${h}` : location.pathname);
 function reveal(userAction) {
   empty.hidden = true; body.hidden = false;
-  if (userAction && matchMedia('(max-width: 760px)').matches) scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
-  const on = $('.item.is-on'); if (on && !matchMedia('(max-width: 760px)').matches) on.scrollIntoView({ block: 'nearest' });
+  if (userAction && PHONE.matches) scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+  const on = $('.item.is-on'); if (on && !PHONE.matches) on.scrollIntoView({ block: 'nearest' });
 }
 
 function openTask(id, i = 0, userAction = false) {
@@ -611,7 +612,7 @@ function renderTask() {
     ${task.more ? `<a class="panel__more" href="${task.more[0]}">${task.more[1]} →</a>` : ''}`;
   showControl(task.steps[i].c, task.steps[i]);
 }
-const keepStep = () => { if (matchMedia('(max-width: 760px)').matches) body.querySelector('.step.is-on')?.scrollIntoView({ block: 'nearest' }); };
+const keepStep = () => { if (PHONE.matches) body.querySelector('.step.is-on')?.scrollIntoView({ block: 'nearest' }); };
 function openControl(id, userAction = false) {
   if (!CONTROLS[id]) return;
   active = { type: 'control', id };
