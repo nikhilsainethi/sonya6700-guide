@@ -122,7 +122,7 @@
   const nav = $('#nav'), prog = $('#progress');
   const navLinks = $$('.nav__links a[href^="#"]');
   const chapters = navLinks.map((a) => $(a.getAttribute('href')));
-  let ticking = false;
+  let ticking = false, lastHere = -2;
   const onScroll = () => {
     if (ticking) return; ticking = true;
     requestAnimationFrame(() => {
@@ -137,6 +137,10 @@
       let here = -1;
       chapters.forEach((c, i) => { if (c.getBoundingClientRect().top < innerHeight * 0.4) here = i; });
       navLinks.forEach((a, i) => a.classList.toggle('is-here', i === here));
+      if (here !== lastHere) {                       // keep the current chapter visible in the scrolling nav on phones
+        lastHere = here; const a = navLinks[here], box = a && a.parentElement;
+        if (box && box.scrollWidth > box.clientWidth) box.scrollTo({ left: a.offsetLeft - box.offsetLeft - (box.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' });
+      }
     });
   };
   addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); onScroll();
@@ -169,6 +173,26 @@
   };
   heroR.addEventListener('input', heroUpd); heroUpd();
   $$('.range').forEach((r) => r.style.setProperty('--steps', r.max - r.min));
+
+  /* Touch: iOS Safari only moves a slider when you drag its small thumb. Let a tap or a drag
+     anywhere along the track set the value instead. Vertical swipes still scroll the page. */
+  $$('input[type="range"]').forEach((r) => {
+    let x0 = 0, y0 = 0, mode = '';
+    const set = (t) => {
+      const b = r.getBoundingClientRect(), pad = r.classList.contains('range') ? 8 : 0;
+      const f = Math.min(1, Math.max(0, (t.clientX - b.left - pad) / (b.width - pad * 2)));
+      const min = +r.min, max = +r.max, step = +r.step || 1;
+      const v = String(Math.round((min + f * (max - min)) / step) * step);
+      if (v !== r.value) { r.value = v; r.dispatchEvent(new Event('input', { bubbles: true })); }
+    };
+    r.addEventListener('touchstart', (e) => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; mode = ''; }, { passive: true });
+    r.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      if (!mode) { const dx = Math.abs(t.clientX - x0), dy = Math.abs(t.clientY - y0); if (dx < 6 && dy < 6) return; mode = dx >= dy ? 'drag' : 'scroll'; }
+      if (mode === 'drag') { e.preventDefault(); set(t); }
+    }, { passive: false });
+    r.addEventListener('touchend', (e) => { if (mode !== 'scroll') { set(e.changedTouches[0]); e.preventDefault(); } }, { passive: false });
+  });
 
   /* ───────── 01 exposure simulator ───────── */
   const F = [2.8, 4, 5.6, 8, 11, 16, 22];
