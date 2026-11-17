@@ -573,3 +573,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 
 .gloss__search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+/* links into Chapter 00, the 3D camera */
+.hero__cam { display: inline-grid; grid-template-columns: auto auto; column-gap: 14px; align-items: baseline; margin-top: 22px; padding: 12px 0 13px; border-block: 1px solid rgba(232, 238, 242, .3); text-decoration: none; color: var(--frost); font-family: var(--sans); }
+.hero__cam .label { grid-column: 1 / -1; color: var(--orange); margin-bottom: 4px; }
+.hero__cam b { font-weight: 650; font-size: 1.0625rem; }
+.hero__cam i { font-style: normal; color: var(--orange); transition: transform .15s var(--ease-ui); }
+.hero__cam:hover i { transform: translateX(4px); }
+.checks__body a, .evdemo__steps a, .inlink { color: var(--orange-ink); font-family: var(--sans); font-weight: 600; font-size: .875rem; text-underline-offset: 3px; white-space: nowrap; }
+.inlink { font-size: .9375rem; }
