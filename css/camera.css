@@ -332,10 +332,47 @@
   .try { margin-left: 0; }
   .step.is-on .try { margin-left: 14px; }
 }
-@media (max-width: 350px) { .now__set dd { font-size: 1.0625rem; } .now__set > div { padding: 6px 5px 7px; } .now__set dt { letter-spacing: .02em; } }
+@media (max-width: 350px) { .rcp__set dd { font-size: 1rem; } .rcp__set > div { padding: 6px 4px 7px; } .rcp__pick button { font-size: 1.375rem; } .mem__btns span { font-size: .6875rem; } .now__set dd { font-size: 1rem; letter-spacing: -.01em; } .now__set > div { padding: 6px 5px 7px; } .now__set dt { letter-spacing: .02em; } }
 @media (max-height: 500px) and (orientation: landscape) {
   .now { position: static; margin: -16px calc(var(--gut) * -1) 14px -20px; padding: 10px var(--gut) 8px 20px; }
   .try { margin-left: 0; }
 }
+
+/* ───────── snow recipes in the panel ───────── */
+.panel [hidden] { display: none !important; }
+.rcp { margin-top: 18px; }
+.rcp__pick { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid var(--ink); }
+.rcp__pick button { font-family: var(--sans); font-stretch: 62%; font-weight: 800; font-size: 1.625rem; line-height: 1; padding: 10px 0 11px; min-height: 44px; color: var(--ink-2); transition: background-color .25s var(--ease-ui), color .25s var(--ease-ui); }
+.rcp__pick button + button { border-left: 1px solid var(--rule); }
+.rcp__pick button.is-on { background: var(--orange); color: var(--night); }
+@media (hover: hover) { .rcp__pick button:not(.is-on):hover { background: var(--shade); color: var(--ink); } }
+.rcp__pick button:focus-visible { outline-offset: -3px; }
+.rcp__mode { margin: 8px 0 0; }
+.rcp__mode .seg__b { font-size: .875rem; padding: 9px 10px 10px; }
+.rcp__mode .seg__b span { font-size: .75rem; }
+.rcp__set { margin-top: 8px; }
+.rcp__set dd { font-size: 1.25rem; }
+.rcp__set > div { padding: 7px 7px 8px; min-width: 0; }
+.rcp__set dt { font-stretch: 88%; letter-spacing: .05em; }
+.rcp__auto { margin-top: 12px; font-size: .9375rem; line-height: 1.42; color: var(--ink-2); }
+.rcp__auto b { color: var(--ink); }
+.rcp__tip { margin-top: 8px; font-size: .9375rem; line-height: 1.42; color: var(--ink-2); }
+.rcp__tip b { color: var(--ink); }
+.rcp__go { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 16px; }
+.rcp__go .btn { padding: 13px 16px; }
+.steps.is-summary .step__head { padding-block: 10px 11px; }
+.steps.is-summary .step__do { font-size: 1rem; }
+.grp--rcp .item i { color: var(--orange-ink); }
+.grp--rcp .item.is-on i { color: var(--orange); }
+
+.mem { margin-top: 20px; border-top: 2px solid var(--ink); padding-top: 14px; }
+.mem .label { color: var(--orange-ink); }
+.mem__how { margin-top: 6px; font-size: .9375rem; line-height: 1.42; color: var(--ink-2); }
+.mem__btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.mem__btns button { display: grid; gap: 2px; text-align: left; border: 1px solid var(--ink); background: var(--paper); padding: 8px 10px 9px; min-height: 60px; align-content: start; transition: background-color .15s var(--ease-ui), transform .08s var(--ease-ui); }
+.mem__btns b { font-family: var(--sans); font-stretch: 62%; font-weight: 800; font-size: 1.5rem; line-height: 1; }
+.mem__btns span { font-family: var(--sans); font-size: .75rem; line-height: 1.2; color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+@media (hover: hover) { .mem__btns button:hover { background: var(--shade); } }
+.mem__btns button:active { transform: translateY(1px); }
 
 @media (prefers-reduced-motion: reduce) { .pin__dot::after { animation: none; opacity: 0; } }
