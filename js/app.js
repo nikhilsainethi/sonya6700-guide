@@ -120,7 +120,7 @@
 
   /* ───────── nav: solid state, progress, current chapter ───────── */
   const nav = $('#nav'), prog = $('#progress');
-  const navLinks = $$('.nav__links a');
+  const navLinks = $$('.nav__links a[href^="#"]');
   const chapters = navLinks.map((a) => $(a.getAttribute('href')));
   let ticking = false;
   const onScroll = () => {
@@ -351,7 +351,7 @@
     ['Shutter speed', 'Exposure', 'How long the sensor collects light, written as a fraction of a second. Short freezes motion, long blurs it.', 'From 1/8000 of a second up to 30 full seconds.'],
     ['ISO', 'Exposure', 'How much the camera amplifies the light it collected. Higher is brighter but grainier.', 'Clean to about 3200. Set Auto ISO to top out at 6400.'],
     ['Stop', 'Exposure', 'One doubling or halving of light. 1/250 to 1/125 is one stop brighter; so is ISO 100 to 200, or f/4 to f/2.8.', 'Each dial click on the camera is a third of a stop.'],
-    ['Exposure compensation', 'Exposure', 'The ± control. It tells the camera to make the picture brighter or darker than it thinks is right.', 'Works in P, A and S. Your most important control in snow.'],
+    ['Exposure compensation', 'Exposure', 'The ± control. It tells the camera to make the picture brighter or darker than it thinks is right.', 'Bottom edge of the control wheel, then turn. Your most important control in snow.'],
     ['Metering', 'Exposure', 'How the camera measures the brightness of a scene. It assumes everything averages out to a medium grey.', 'Leave it on Multi. It is right most of the time, except with snow.'],
     ['Histogram', 'Exposure', 'A graph of the tones in the picture: shadows on the left, highlights on the right. A pile against either wall means lost detail.', 'Press DISP until it appears. Trust it over the screen.'],
     ['Blown highlights', 'Exposure', 'Areas so bright they recorded as pure blank white. Also called clipping. They cannot be recovered afterwards.', 'Watch for them in snow, skies and white clothing.'],
